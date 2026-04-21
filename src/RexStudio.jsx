@@ -235,7 +235,8 @@ RULES: No placeholder text ever. Real numbers and scenarios only. California-rel
 
 function parseWorksheet(text) {
   const get = (tag) => {
-    const re = new RegExp(`\\[${tag}\\]\\n([\\s\\S]*?)(?=\\n\\[|$)`, "i");
+    // Match [TAG] followed by content until next [ tag or end
+    const re = new RegExp(`\\[${tag}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n\\[(?:TITLE|SUBTITLE|DIRECTIONS|PASSAGE|SECTION|BONUS|ANSWER|TEACHER)|$)`, "i");
     const m = text.match(re);
     return m ? m[1].trim() : "";
   };
@@ -341,30 +342,12 @@ function PrintableView({ parsed, subject, showKey, onToggleKey }) {
   const hc = subject.hc;
 
   const handlePrint = () => {
-    const style = document.createElement("style");
-    style.id = "rex-print-style";
-    style.innerHTML = `
-      @media print {
-        body > * { display: none !important; }
-        #rex-worksheet-only { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
-      }
-    `;
-    document.head.appendChild(style);
-    const el = document.getElementById("rex-worksheet-content");
-    const wrapper = document.createElement("div");
-    wrapper.id = "rex-worksheet-only";
-    wrapper.innerHTML = el.innerHTML;
-    document.body.appendChild(wrapper);
     window.print();
-    setTimeout(() => {
-      document.body.removeChild(wrapper);
-      document.head.removeChild(style);
-    }, 1000);
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2 rex-no-print">
         <div className="flex gap-2">
           <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-slate-300 transition-all"><Printer size={12} /> Print / PDF</button>
           <button onClick={onToggleKey} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${showKey ? "bg-slate-800 text-white border-slate-800" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
@@ -374,8 +357,7 @@ function PrintableView({ parsed, subject, showKey, onToggleKey }) {
         <span className="text-xs text-slate-400 italic">CCSS · 5th Grade · California</span>
       </div>
 
-      <div id="rex-worksheet-content">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden rex-print-area">
         <div style={{ background:`linear-gradient(135deg,${hc}18 0%,${hc}06 100%)`, borderTop:`4px solid ${hc}` }} className="px-7 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -432,7 +414,6 @@ function PrintableView({ parsed, subject, showKey, onToggleKey }) {
           <div className="flex gap-1">{[...Array(4)].map((_,i)=><div key={i} style={{background:`${hc}50`}} className="w-1 h-1 rounded-full"/>)}</div>
         </div>
       </div>
-      </div>{/* end rex-worksheet-content */}
 
       {showKey && parsed.answerKey && (
         <div className="mt-4 bg-slate-800 rounded-2xl p-5">
@@ -702,9 +683,10 @@ export default function RexStudio() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50">
       <style>{`
         @media print {
-          body > div > *:not(#rex-worksheet-only) { display: none !important; }
-          #rex-worksheet-only { display: block !important; }
-          .no-print { display: none !important; }
+          body { margin: 0; padding: 0; }
+          header, nav, .rex-no-print, button { display: none !important; }
+          .rex-print-area { border: none !important; border-radius: 0 !important; box-shadow: none !important; }
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       `}</style>
       {/* Header */}
