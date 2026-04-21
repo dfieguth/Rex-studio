@@ -92,18 +92,14 @@ const OUTPUT_MODES = [
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 async function callClaude(prompt, apiKey, maxTokens = 4000) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/api/claude", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: maxTokens,
-      messages: [{ role: "user", content: prompt }],
-    }),
+    body: JSON.stringify({ prompt, apiKey, maxTokens }),
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.content?.[0]?.text || "";
+  if (data.error) throw new Error(data.error);
+  return data.text || "";
 }
 
 // ─── PROMPT ───────────────────────────────────────────────────────────────────
