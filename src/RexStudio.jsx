@@ -357,7 +357,8 @@ function PrintableView({ parsed, subject, showKey, onToggleKey }) {
         <span className="text-xs text-slate-400 italic">CCSS · 5th Grade · California</span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden rex-print-area">
+      <div className="rex-print-area">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div style={{ background:`linear-gradient(135deg,${hc}18 0%,${hc}06 100%)`, borderTop:`4px solid ${hc}` }} className="px-7 py-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -416,7 +417,7 @@ function PrintableView({ parsed, subject, showKey, onToggleKey }) {
       </div>
 
       {showKey && parsed.answerKey && (
-        <div className="mt-4 bg-slate-800 rounded-2xl p-5 rex-answer-key">
+        <div className="mt-4 bg-slate-800 rounded-2xl p-5 rex-answer-key" style={{pageBreakBefore:"always"}}>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Answer Key</p>
           <pre className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed">{parsed.answerKey}</pre>
           {parsed.teacherNotes && (
@@ -427,6 +428,7 @@ function PrintableView({ parsed, subject, showKey, onToggleKey }) {
           )}
         </div>
       )}
+      </div>{/* end rex-print-area */}
     </div>
   );
 }
@@ -683,11 +685,12 @@ export default function RexStudio() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50">
       <style>{`
         @media print {
-          body { margin: 0; padding: 0; }
-          .rex-no-print { display: none !important; }
-          .rex-answer-key { page-break-before: always !important; }
-          .rex-print-area { border: none !important; border-radius: 0 !important; box-shadow: none !important; }
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body * { visibility: hidden; }
+          .rex-print-area, .rex-print-area * { visibility: visible; }
+          .rex-print-area { position: absolute; top: 0; left: 0; width: 100%; }
+          .rex-answer-key { page-break-before: always !important; }
+          .rex-answer-key, .rex-answer-key * { visibility: visible; }
         }
       `}</style>
       {/* Header */}
