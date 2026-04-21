@@ -416,7 +416,7 @@ function PrintableView({ parsed, subject, showKey, onToggleKey }) {
       </div>
 
       {showKey && parsed.answerKey && (
-        <div className="mt-4 bg-slate-800 rounded-2xl p-5">
+        <div className="mt-4 bg-slate-800 rounded-2xl p-5 rex-answer-key">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Answer Key</p>
           <pre className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed">{parsed.answerKey}</pre>
           {parsed.teacherNotes && (
@@ -684,13 +684,14 @@ export default function RexStudio() {
       <style>{`
         @media print {
           body { margin: 0; padding: 0; }
-          header, nav, .rex-no-print, button { display: none !important; }
+          .rex-no-print { display: none !important; }
+          .rex-answer-key { page-break-before: always !important; }
           .rex-print-area { border: none !important; border-radius: 0 !important; box-shadow: none !important; }
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       `}</style>
       {/* Header */}
-      <div className="bg-white border-b border-slate-100 px-4 py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <div className="bg-white border-b border-slate-100 px-4 py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-sm rex-no-print">
         <div className="flex items-center gap-3">
           <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${subject.gradient} flex items-center justify-center shadow-sm transition-all duration-300`}>
             <subject.icon size={18} className="text-white"/>
@@ -707,7 +708,7 @@ export default function RexStudio() {
 
       {/* API panel */}
       {showApi && (
-        <div className="bg-amber-50 border-b border-amber-100 px-4 py-3">
+        <div className="bg-amber-50 border-b border-amber-100 px-4 py-3 rex-no-print">
           <div className="max-w-2xl mx-auto flex gap-2 items-center">
             <input type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-ant-… from console.anthropic.com" className="flex-1 px-3.5 py-2 rounded-xl border border-amber-200 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white font-mono"/>
             <button onClick={()=>{localStorage.setItem("tos2_settings",JSON.stringify({apiKey}));setShowApi(false);}} className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition-colors">Save</button>
@@ -718,7 +719,7 @@ export default function RexStudio() {
 
       <div className="max-w-3xl mx-auto px-4 py-5 space-y-4">
         {/* Subject */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 rex-no-print">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Subject</p>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {SUBJECTS.map((s,idx)=>(
@@ -730,7 +731,7 @@ export default function RexStudio() {
         </div>
 
         {/* Config */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-5">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-5 rex-no-print">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Configure Your Resource</p>
 
           <div>
