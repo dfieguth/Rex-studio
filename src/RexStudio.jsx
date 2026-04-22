@@ -21,13 +21,13 @@ const STANDARDS = {
   },
   ela: {
     "Reading Comprehension": { codes:"5.RI.1–3, 5.RI.6, 5.RL.1–3", focus:"Quoting from text, main idea and details, author's point of view, summarizing.", skills:["cite text evidence","main idea","author's point of view","compare/contrast","cause/effect","inferencing"], passage:true },
-    "Vocabulary Practice":   { codes:"5.L.4–6",               focus:"Context clues, Greek/Latin roots, figurative language, academic vocabulary.", skills:["context clues","Greek/Latin roots","prefixes/suffixes","simile/metaphor","idioms","academic vocabulary"] },
-    "Context Clues":         { codes:"5.L.4a, 5.RI.4, 5.RL.4",focus:"Determining word meaning using context; literal vs nonliteral meaning.", skills:["definition clues","synonym clues","antonym clues","example clues","inference clues"] },
-    "Main Idea & Details":   { codes:"5.RI.2–3, 5.RI.5",      focus:"Main ideas, supporting details, summarizing, text structure.", skills:["identifying main idea","topic vs main idea","supporting details","summarizing","text structure"] },
-    "Story Elements":        { codes:"5.RL.1–3, 5.RL.5–6",    focus:"Character, conflict, theme, plot structure, narrator point of view.", skills:["character traits/motivation","conflict/resolution","theme vs topic","plot structure","point of view"] },
-    "Author's Purpose":      { codes:"5.RI.6, 5.RI.8, 5.RL.6",focus:"Author's purpose and point of view, evaluating evidence, fact vs opinion.", skills:["persuade/inform/entertain","author's bias","evaluating evidence","author's claim","fact vs opinion"] },
-    "Text Evidence":         { codes:"5.RI.1, 5.RL.1, 5.W.9", focus:"Quoting accurately from text to explain and support inferences.", skills:["locating evidence","quoting correctly","evidence relevance","connecting to claim"] },
-    "Compare & Contrast":    { codes:"5.RI.3, 5.RI.9, 5.RL.3, 5.RL.9", focus:"Comparing two texts, multiple accounts, structure analysis.", skills:["comparing texts","Venn diagram thinking","comparing characters","synthesizing"] },
+    "Vocabulary Practice":   { codes:"5.L.4–6",               focus:"Context clues, Greek/Latin roots, figurative language, academic vocabulary.", skills:["context clues","Greek/Latin roots","prefixes/suffixes","simile/metaphor","idioms","academic vocabulary"] , passage:true },
+    "Context Clues":         { codes:"5.L.4a, 5.RI.4, 5.RL.4",focus:"Determining word meaning using context; literal vs nonliteral meaning.", skills:["definition clues","synonym clues","antonym clues","example clues","inference clues"] , passage:true },
+    "Main Idea & Details":   { codes:"5.RI.2–3, 5.RI.5",      focus:"Main ideas, supporting details, summarizing, text structure.", skills:["identifying main idea","topic vs main idea","supporting details","summarizing","text structure"] , passage:true },
+    "Story Elements":        { codes:"5.RL.1–3, 5.RL.5–6",    focus:"Character, conflict, theme, plot structure, narrator point of view.", skills:["character traits/motivation","conflict/resolution","theme vs topic","plot structure","point of view"] , passage:true },
+    "Author's Purpose":      { codes:"5.RI.6, 5.RI.8, 5.RL.6",focus:"Author's purpose and point of view, evaluating evidence, fact vs opinion.", skills:["persuade/inform/entertain","author's bias","evaluating evidence","author's claim","fact vs opinion"] , passage:true },
+    "Text Evidence":         { codes:"5.RI.1, 5.RL.1, 5.W.9", focus:"Quoting accurately from text to explain and support inferences.", skills:["locating evidence","quoting correctly","evidence relevance","connecting to claim"] , passage:true },
+    "Compare & Contrast":    { codes:"5.RI.3, 5.RI.9, 5.RL.3, 5.RL.9", focus:"Comparing two texts, multiple accounts, structure analysis.", skills:["comparing texts","Venn diagram thinking","comparing characters","synthesizing"] , passage:true },
   },
   writing: {
     "Narrative Writing Prompt": { codes:"5.W.3a–e",  focus:"Situation/narrator, event sequences, dialogue, description, transitional phrases, conclusion.", skills:["story hook","dialogue","sensory details","transitional phrases","strong conclusion"] },
@@ -132,13 +132,11 @@ EXACT STRUCTURE — copy these markers verbatim, fill in content only inside the
 (Clear 1–2 sentence student directions)
 
 ${std.passage ? `[PASSAGE]
-CRITICAL: This block MUST appear here, between [DIRECTIONS] and [SECTION: Warm-Up]. Do NOT put the passage inside a section. Do NOT skip this block.
-(Write the passage title in ALL CAPS on the very first line)
-(Write the full passage text below the title, 150–200 words. Make it engaging and appropriate for 5th grade California students.)
+(YOUR PASSAGE TITLE IN ALL CAPS — e.g. THE CALIFORNIA GOLD RUSH)
+(Your original 150-200 word passage goes here. Write ONLY the passage text. No instructions. No brackets. No placeholders. Real sentences only. Start writing the passage immediately after the title line.)
 
 ` : ""}[SECTION: Warm-Up]
 TYPE: short_answer
-RULE: TYPE line must come immediately after SECTION line. Never skip it. Never add blank lines between them.
 1. (question)
 _______________________________________________
 
@@ -253,37 +251,43 @@ function parseWorksheet(text) {
     return m ? m[1].trim() : "";
   };
 
-  // Primary: look for explicit [PASSAGE] block
+  // Step 1: Get raw passage block
   let passage = get("PASSAGE");
 
-  // Strip the CRITICAL instruction line if it got included
+  // Step 2: Clean out any instruction artifacts
   if (passage) {
-    passage = passage.replace(/CRITICAL:.*?\n/g, "").trim();
-    // If passage is now just the placeholder text, clear it
-    if (passage.includes("(Write the passage") || passage.length < 50) {
-      passage = "";
-    }
+    passage = passage
+      .replace(/CRITICAL:.*?\n/gi, "")
+      .replace(/RULE:.*?\n/gi, "")
+      .replace(/IMPORTANT:.*?\n/gi, "")
+      .replace(/Write your original passage.*?\n/gi, "")
+      .replace(/\(replace this.*?\)/gi, "")
+      .replace(/\(Write.*?\)/gi, "")
+      .trim();
+    // Discard if too short or still placeholder
+    if (passage.length < 80) passage = "";
   }
 
-  // Fallback 1: look for passage content between [DIRECTIONS] and first [SECTION]
+  // Step 3: If still no passage, find text between [DIRECTIONS] and first [SECTION]
   if (!passage) {
-    const betweenDirAndSection = text.match(/\[DIRECTIONS\][\s\S]*?\n\n([\s\S]*?)(?=\[SECTION:)/i);
-    if (betweenDirAndSection) {
-      const candidate = betweenDirAndSection[1].trim();
-      if (candidate.length > 100 && !candidate.startsWith("[") && candidate.includes(".")) {
-        passage = candidate;
+    const dirIdx = text.indexOf("[DIRECTIONS]");
+    const secIdx = text.indexOf("[SECTION:");
+    if (dirIdx !== -1 && secIdx !== -1 && secIdx > dirIdx) {
+      // Get everything between end of directions content and start of first section
+      const between = text.slice(dirIdx, secIdx);
+      // Skip past the directions line itself
+      const afterDir = between.replace(/\[DIRECTIONS\][^\n]*\n[^\n]+\n/, "").trim();
+      if (afterDir.length > 80 && !afterDir.startsWith("[") && afterDir.split(".").length > 2) {
+        passage = afterDir;
       }
     }
   }
 
-  // Fallback 2: look for content before first numbered question in any section
+  // Step 4: Last resort - look for ALL CAPS title followed by paragraph text
   if (!passage) {
-    const beforeFirstQ = text.match(/TYPE:\s*\w+\n([\s\S]*?)(?=\n\s*1\.)/i);
-    if (beforeFirstQ) {
-      const candidate = beforeFirstQ[1].trim();
-      if (candidate.length > 100 && !candidate.startsWith("[") && candidate.includes(".")) {
-        passage = candidate;
-      }
+    const capsTitle = text.match(/\n([A-Z][A-Z\s]{10,})\n([\s\S]{100,}?)(?=\n\[SECTION:)/);
+    if (capsTitle) {
+      passage = capsTitle[1].trim() + "\n" + capsTitle[2].trim();
     }
   }
 
