@@ -138,6 +138,7 @@ CRITICAL: This block MUST appear here, between [DIRECTIONS] and [SECTION: Warm-U
 
 ` : ""}[SECTION: Warm-Up]
 TYPE: short_answer
+RULE: TYPE line must come immediately after SECTION line. Never skip it. Never add blank lines between them.
 1. (question)
 _______________________________________________
 
@@ -233,6 +234,17 @@ RULES: No placeholder text ever. Real numbers and scenarios only. California-rel
 
 // ─── PARSE WORKSHEET ─────────────────────────────────────────────────────────
 
+function inferType(heading) {
+  const h = heading.toLowerCase();
+  if (h.includes("multiple choice") || h.includes("multiple-choice")) return "multiple_choice";
+  if (h.includes("warm")) return "short_answer";
+  if (h.includes("word problem") || h.includes("show your work") || h.includes("math")) return "word_problem";
+  if (h.includes("explain") || h.includes("thinking") || h.includes("writing")) return "explain";
+  if (h.includes("true") || h.includes("false")) return "true_false";
+  if (h.includes("fill") || h.includes("blank")) return "fill_blank";
+  return "short_answer";
+}
+
 function parseWorksheet(text) {
   const get = (tag) => {
     // Match [TAG] followed by content until next [ tag or end
@@ -275,11 +287,29 @@ function parseWorksheet(text) {
     }
   }
 
-  const sectionRe = /\[SECTION:\s*([^\]]+)\]\nTYPE:\s*(\w+)\n([\s\S]*?)(?=\n\[SECTION:|\n\[BONUS\]|\n\[ANSWER KEY\]|\n\[TEACHER NOTES\]|$)/gi;
+  // Flexible section parser - handles variations in Claude output formatting
   const sections = [];
+  
+  // Strategy 1: Standard format [SECTION: name]\nTYPE: type\n
+  const sectionRe = /\[SECTION:\s*([^\]]+)\][^\n]*\n(?:TYPE:\s*(\w+)[^\n]*\n)?([\s\S]*?)(?=\n\[SECTION:|\n\[BONUS|\n\[ANSWER|\n\[TEACHER|$)/gi;
   let m;
   while ((m = sectionRe.exec(text)) !== null) {
-    sections.push({ heading: m[1].trim(), type: m[2].trim(), content: m[3].trim() });
+    const heading = m[1].trim();
+    // Infer type from heading if TYPE line is missing
+    let type = m[2] ? m[2].trim() : inferType(heading);
+    const rawContent = m[3].trim();
+    // Skip if content looks like raw unparsed markers
+    if (rawContent.startsWith("[SECTION:") || rawContent.startsWith("TYPE:")) continue;
+    sections.push({ heading, type, content: rawContent });
+  }
+  
+  // If no sections found, try alternate format without TYPE line
+  if (sections.length === 0) {
+    const altRe = /\*\*([A-Z][^*]+)\*\*[^\n]*\n([\s\S]*?)(?=\n\*\*[A-Z]|\n\[BONUS|\n\[ANSWER|$)/gi;
+    while ((m = altRe.exec(text)) !== null) {
+      const heading = m[1].trim();
+      sections.push({ heading, type: inferType(heading), content: m[2].trim() });
+    }
   }
 
   return {
@@ -297,7 +327,14 @@ function parseWorksheet(text) {
 // ─── PRINTABLE VIEW ───────────────────────────────────────────────────────────
 
 function renderSectionHTML(sec) {
-  const lines = sec.content.split("\n");
+  // Clean any accidentally included section markers from content
+  let cleanContent = sec.content
+    .replace(/^\[SECTION:[^\]]+\]\n?/gim, "")
+    .replace(/^TYPE:\s*\w+\n?/gim, "")
+    .replace(/^RULE:[^\n]+\n?/gim, "")
+    .replace(/^IMPORTANT:[^\n]+\n?/gim, "")
+    .trim();
+  const lines = cleanContent.split("\n");
   let html = "";
   let i = 0;
   while (i < lines.length) {
