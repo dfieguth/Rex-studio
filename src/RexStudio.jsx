@@ -515,6 +515,74 @@ function CanvaSection({ title, content, color, index }) {
   );
 }
 
+function CanvaAIBlock({ prompt, subject }) {
+  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(true);
+  const hc = subject.hc;
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{border: `2px solid ${hc}40`, background: `${hc}08`}}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-4"
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold" style={{background: hc}}>
+            AI
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-extrabold text-slate-800">Step 1: Canva AI Prompt</p>
+            <p className="text-xs text-slate-500">Copy this first → paste into Canva AI to generate your layout</p>
+          </div>
+        </div>
+        <ChevronDown size={16} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5">
+          {/* How to use */}
+          <div className="bg-white rounded-xl p-4 mb-4 border border-slate-100">
+            <p className="text-xs font-bold text-slate-600 mb-2">How to use this in Canva:</p>
+            <div className="space-y-1.5">
+              {[
+                "Go to canva.com → click Magic Design or use the AI assistant",
+                "Paste this prompt into the AI text field",
+                "Let Canva AI generate a starting layout",
+                "Then use the content blocks below to fill it in"
+              ].map((step, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <span className="w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5" style={{background: hc, fontSize: 10}}>{i+1}</span>
+                  <p className="text-xs text-slate-600">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* The prompt */}
+          <div className="bg-slate-800 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-700">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Canva AI Prompt</span>
+              <button
+                onClick={() => { navigator.clipboard.writeText(prompt); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                style={{background: copied ? "#10B981" : hc, color: "white"}}
+              >
+                {copied ? <Check size={12}/> : <Copy size={12}/>}
+                {copied ? "Copied!" : "Copy Prompt"}
+              </button>
+            </div>
+            <pre className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed p-4 max-h-48 overflow-y-auto">{prompt}</pre>
+          </div>
+
+          <p className="text-xs text-slate-400 mt-3 text-center">
+            After Canva generates the layout → come back and use the content blocks below to fill it in
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CanvaView({ parsed, subject, rawText }) {
   const hc = subject.hc;
   const [allCopied, setAllCopied] = useState(false);
@@ -605,8 +673,44 @@ function CanvaView({ parsed, subject, rawText }) {
     setTimeout(()=>setAllCopied(false),2000);
   };
 
+  // Build the Canva AI prompt
+  const sectionNames = parsed.sections.map(s => s.heading).join(", ");
+  const hasPassage = !!parsed.passage;
+  const canvaAIPrompt = `Create a professional, print-ready classroom worksheet for elementary school students with the following specifications:
+
+WORKSHEET DETAILS:
+Title: ${parsed.title || "Educational Worksheet"}
+Subject: ${subject.label}
+Grade Level: 5th Grade
+Standards: ${parsed.subtitle || "CCSS Aligned"}
+
+LAYOUT REQUIREMENTS:
+- Clean, teacher-friendly design suitable for printing
+- Bold, eye-catching title at the top in a colored header banner
+- Name, Date, and Score fields in the header area
+- Directions box with a subtle background
+${hasPassage ? "- A clearly defined reading passage box with a bold passage title" : ""}
+- Distinct section headers for: ${sectionNames}
+- Multiple choice questions with circular bubble answer options (○ A. ○ B. ○ C. ○ D.)
+- Lined answer spaces for short answer and written response questions
+- Dashed work boxes for word problems labeled "Show Your Work"
+- A star-bordered bonus challenge box at the bottom
+- Professional footer with grade level and copyright line
+
+STYLE:
+- Fonts: Bold display font for title, clean readable font for body
+- Layout: Single column, well-spaced for student writing room
+- Feel: Polished and professional — suitable for TPT sale or classroom use
+- Page size: 8.5 x 11 inches, portrait orientation
+- Color: Choose a cohesive, professional color scheme that fits an elementary classroom
+
+Generate a worksheet template layout I can fill in with my content.`;
+
   return (
     <div className="space-y-4">
+      {/* Canva AI Prompt Block */}
+      <CanvaAIBlock prompt={canvaAIPrompt} subject={subject} />
+
       {/* Header */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
