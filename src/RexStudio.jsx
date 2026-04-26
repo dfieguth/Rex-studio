@@ -503,8 +503,7 @@ RULES:
 - For math: rotate through different real-world contexts — sports statistics, cooking and recipes, school events, construction projects, travel distances, shopping, fundraisers, science experiments, farming, architecture, population data, environmental data.
 - For word problems: use different student names and scenarios every time. Never repeat the same setup.
 - Generate as if this is the first and only time you are creating this type of worksheet — make it unique, engaging, and specific.
-${std.passage ? "- TOPIC FOR THIS WORKSHEET: " + randomTopic + ". Build your passage, scenarios, and examples around this specific topic. Make it feel completely fresh and specific.\`;
-
+- TOPIC FOR THIS WORKSHEET: ${randomTopic}. Build your passage, scenarios, and examples around this specific topic. Make it feel completely fresh and specific.\`;
 // ─── PARSE WORKSHEET ─────────────────────────────────────────────────────────
 
 function inferType(heading) {
