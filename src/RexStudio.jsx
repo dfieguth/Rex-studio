@@ -30,7 +30,7 @@ const STANDARDS = {
       "Decimals Practice":         { codes:"5.NBT.1–4, 5.NBT.7", focus:"Place value to thousandths, powers of 10, comparing and rounding decimals, decimal operations.", skills:["decimal place value","powers of 10","comparing decimals","rounding","decimal operations","decimal word problems"] },
       "Multiplication & Division": { codes:"5.NBT.2, 5.NBT.5–6, 5.OA.1–2", focus:"Multi-digit multiplication, division with 2-digit divisors, numerical expressions with parentheses.", skills:["multi-digit multiplication","long division","order of operations","numerical expressions","estimation"] },
       "Volume":                    { codes:"5.MD.C.3–5", focus:"Volume of rectangular prisms using unit cubes and formulas V=lwh and V=bh, additive volumes, real-world volume problems.", skills:["unit cubes","V=lwh formula","V=bh formula","additive volume","volume word problems"] },
-      "Coordinate Plane & Geometry": { codes:"5.G.1–4, 5.MD.1–2", focus:"Plotting and interpreting ordered pairs, classifying 2D figures, measurement conversion, line plots.", skills:["ordered pairs","coordinate plane","classifying shapes","quadrilaterals","triangles","unit conversion","line plots"] },
+      "Coordinate Plane & Geometry": { codes:"5.OA.3, 5.G.1–4, 5.MD.1–2", focus:"Plotting and interpreting ordered pairs, generating numerical patterns and graphing their ordered pairs, classifying 2D figures, measurement conversion, line plots.", skills:["ordered pairs","coordinate plane","numerical patterns and their graphs","classifying shapes","quadrilaterals","triangles","unit conversion","line plots"] },
       "Order of Operations":       { codes:"5.OA.1–2", focus:"Expressions with parentheses, brackets, braces; evaluating and comparing.", skills:["parentheses/brackets/braces","evaluating expressions","writing expressions","comparing expressions"] },
       "Word Problems":             { codes:"5.OA.1–2, 5.NBT.5–6, 5.NF.2–6, 5.MD.1", focus:"Multi-step real-world problems with whole numbers, fractions, and decimals.", skills:["multi-step reasoning","operation selection","interpreting remainders","measurement conversion","fraction/decimal contexts"] },
       "Mixed Review":              { codes:"5.OA, 5.NBT, 5.NF, 5.MD, 5.G", focus:"Comprehensive review across all 5th grade math domains.", skills:["fractions","decimals","multiplication/division","volume","coordinate plane","2D figures"] },
@@ -139,7 +139,7 @@ const STANDARDS = {
   },
   3: {
     math: {
-      "Multiplication & Division": { codes:"3.OA.A.1–4, 3.OA.B.5–6, 3.OA.C.7, 3.OA.D.8–9", focus:"Meaning of multiplication and division within 100, properties, the relationship between them, fluency, two-step word problems, and arithmetic patterns.", skills:["equal groups and arrays","multiplication within 100","division within 100","multiplication/division relationship","fact fluency","two-step word problems","arithmetic patterns"] },
+      "Multiplication & Division": { codes:"3.OA.A.1–4, 3.OA.B.5–6, 3.OA.C.7, 3.OA.D.8–9", focus:"Meaning of multiplication and division within 100, properties of operations as strategies, the relationship between them, fluency, two-step word problems, and arithmetic patterns.", skills:["equal groups and arrays","multiplication within 100","division within 100","properties of operations (commutative, distributive)","multiplication/division relationship","fact fluency","two-step word problems","arithmetic patterns"] },
       "Fractions Practice":        { codes:"3.NF.A.1–3", focus:"Understanding fractions as numbers, fractions on a number line, equivalent fractions, and comparing fractions. Denominators limited to 2, 3, 4, 6, and 8.", skills:["unit fractions","fractions as numbers","fractions on a number line","equivalent fractions","comparing same numerator","comparing same denominator","whole numbers as fractions"] },
       "Area & Perimeter":          { codes:"3.MD.C.5–7, 3.MD.D.8", focus:"Area as an attribute measured in unit squares, relating area to multiplication and addition, and solving perimeter problems.", skills:["area with unit squares","area by multiplication","area of combined rectangles","perimeter of polygons","unknown side length","same area different perimeter"] },
       "Place Value & Rounding":    { codes:"3.NBT.A.1–3", focus:"Rounding whole numbers to the nearest 10 or 100, adding and subtracting within 1000, and multiplying one-digit numbers by multiples of 10.", skills:["rounding to nearest 10","rounding to nearest 100","add within 1000","subtract within 1000","multiply by multiples of 10","place value reasoning"] },
@@ -178,7 +178,7 @@ const STANDARDS = {
       "Local Geography":             { codes:"CA HSS 3.1", focus:"Physical and human geography of the local Whittier region using maps, tables, graphs, and charts: local landforms, the use of maps, and how people use the local environment.", skills:["local landforms (Puente Hills, San Gabriel River)","using maps and globes","map symbols and legends","cardinal directions","human use of the environment","reading tables and charts"] },
       "Local American Indian Nations": { codes:"CA HSS 3.2", focus:"American Indian nations of the local region long ago and today, including the Tongva (Gabrieleno/Kizh) of the Whittier Narrows area, how geography shaped their lives, and their interaction with new settlers.", skills:["local Tongva/Gabrieleno people","how geography shaped daily life","food, clothing, and tools","customs and traditions","systems of government","interaction with settlers"] },
       "Local History & Settlement":  { codes:"CA HSS 3.3", focus:"The sequence of local historical events and how each period of settlement left its mark on the Whittier region: Tongva, Spanish mission era, Mexican ranchos, Pio Pico, the Quaker founding, and growth into a modern city.", skills:["sequence of local events","layers of settlement","Spanish and Mexican rancho era","Pio Pico and El Ranchito","Quaker founding of Whittier","change over time","local cultural diversity"] },
-      "Rules, Laws & Government":    { codes:"CA HSS 3.4", focus:"The role of rules and laws in daily life, the basic structure of the U.S. government, the meaning of national and local landmarks and symbols, and the contributions of citizens and heroes.", skills:["why we have rules and laws","the U.S. Constitution (basics)","branches of government (basics)","national symbols (flag, eagle, Statue of Liberty)","local and national landmarks","citizenship","local and national heroes"] },
+      "Rules, Laws & Government":    { codes:"CA HSS 3.4", focus:"The role of rules and laws in daily life, the basic structure of the U.S. government, how California, other states, and tribal nations participate in the federal system, the meaning of national and local landmarks and symbols, and the contributions of citizens and heroes.", skills:["why we have rules and laws","the U.S. Constitution (basics)","branches of government (basics)","how states and tribal nations fit in the federal system","national symbols (flag, eagle, Statue of Liberty)","local and national landmarks","citizenship","local and national heroes"] },
       "Local Economics":             { codes:"CA HSS 3.5", focus:"Basic economic reasoning and the economy of the local Whittier region: how producers use natural, human, and capital resources, goods made locally vs elsewhere, and economic choices and trade-offs.", skills:["producers and consumers","natural/human/capital resources","local industries (citrus, oil, retail)","goods made here vs elsewhere","economic choices and trade-offs","benefits and costs"] },
       "Map Skills":                  { codes:"CA HSS 3.1, CCSS RH.3.7", focus:"Reading and using maps of the local region and beyond: map symbols, legends, cardinal directions, and locating places.", skills:["types of maps","map legends and symbols","cardinal directions","using a map grid","locating places","map scale (intro)"] },
       "Local Heroes & Symbols":      { codes:"CA HSS 3.4.3–6", focus:"Histories of important local and national landmarks, symbols, and documents, and the heroes and individuals who exemplify cherished ideals in the community and nation.", skills:["national symbols and documents","local landmarks","community heroes","national heroes","cherished ideals","patriotism and citizenship"] },
@@ -293,6 +293,26 @@ function pickFreshTopic(grade, subjectId, topics) {
 function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic) {
   const std = STANDARDS[grade]?.[subjectId]?.[resourceType] || { codes:`${gradeOrdinal(grade)} Grade CCSS`, focus:`${gradeOrdinal(grade)} grade ${subjectId}`, skills:[resourceType] };
   const gradeLabel = gradeOrdinal(grade);
+
+  // ── Grade scaling: passage length, sentence style, and load scale by grade ──
+  const gradeScale = {
+    3: { passageWords:"100-150", passageStyle:"Use short, simple sentences with one idea each and grade 3 vocabulary (a few stretch words are fine).", mcCut:1, draftLines:8, tone:"warm, encouraging, and concrete" },
+    4: { passageWords:"150-200", passageStyle:"Use clear sentences with some compound structures and grade 4 vocabulary.", mcCut:0, draftLines:10, tone:"warm and clear" },
+    5: { passageWords:"180-230", passageStyle:"Use varied sentence structures and richer vocabulary appropriate for grade 5.", mcCut:0, draftLines:12, tone:"clear and increasingly academic" },
+  };
+  const gs = gradeScale[grade] || gradeScale[4];
+
+  // ── Purpose plans: each purpose owns its real question counts ──
+  const purposePlan = {
+    practice:   { warm:3, mc:4, apply:2, explain:1, guide:"Lesson practice used right after instruction. Include a worked example or hint box immediately after the directions." },
+    homework:   { warm:2, mc:4, apply:2, explain:1, guide:"Homework completable independently in 15-20 minutes. No new concepts." },
+    review:     { warm:2, mc:5, apply:2, explain:2, guide:"SBAC/test review. Mirror SBAC formats. Make at least ONE multiple choice question a select-ALL-that-apply with 5 choices and mark it clearly in the question text. Require explain-your-thinking responses." },
+    finisher:   { warm:1, mc:3, apply:2, explain:1, guide:"Early finisher enrichment. Rich, puzzle-like, self-contained challenges." },
+    assessment: { warm:1, mc:3, apply:1, explain:1, guide:"Quick assessment of one focused skill. Keep it tight. End the worksheet with a student self-assessment line: How sure am I?  [ ] Very sure   [ ] Mostly sure   [ ] I need help" },
+  };
+  const pp = purposePlan[purpose] || purposePlan.practice;
+  const mcCount = Math.max(3, pp.mc - gs.mcCut);
+
   const diffGuide = {
     on: `Standard ${gradeLabel} grade difficulty. Moderate complexity. Numbers and vocabulary sit squarely at grade level. Multiple-choice distractors reflect the real errors ${gradeLabel} graders make.`,
     support: `BELOW GRADE LEVEL / SCAFFOLDED. This worksheet is for students working below grade level who need support to access the same standard. It must be STRUCTURALLY different from a standard worksheet, not just easier wording.`,
@@ -304,7 +324,7 @@ function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic)
   const diffStructure = {
     on: "",
     support: `
-DIFFERENTIATION REQUIREMENTS (WITH SUPPORT / BELOW GRADE LEVEL) — these are MANDATORY and override the default structure where they conflict:
+DIFFERENTIATION REQUIREMENTS (WITH SUPPORT / BELOW GRADE LEVEL) - these are MANDATORY and override the default structure where they conflict:
 - Begin with a "Word Bank" or "Helpful Hints" box right after the directions, containing key vocabulary, formulas, or reminders the student will need.
 - Before question 1, include ONE fully worked example labeled "Example" that shows every step of the kind of problem the student is about to do.
 - Multiple choice: give only THREE answer choices (A, B, C), not four.
@@ -314,33 +334,135 @@ DIFFERENTIATION REQUIREMENTS (WITH SUPPORT / BELOW GRADE LEVEL) — these are MA
 - Reduce the total number of questions slightly so the page does not feel overwhelming.
 - Keep reading passages shorter and use simpler sentence structure, while keeping the same topic and standard.`,
     extend: `
-DIFFERENTIATION REQUIREMENTS (EXTENSION / ABOVE GRADE LEVEL) — these are MANDATORY and override the default structure where they conflict:
-- Replace the simple Warm-Up with a richer entry task that requires reasoning from the first question.
+DIFFERENTIATION REQUIREMENTS (EXTENSION / ABOVE GRADE LEVEL) - these are MANDATORY and override the default structure where they conflict:
+- Replace the simple opening section with a richer entry task that requires reasoning from the first question.
 - Include at least one ERROR ANALYSIS question: present a fictional student's completed work that contains a mistake, and ask the student to find the error, explain it, and correct it.
 - Include at least one CREATE-YOUR-OWN question where the student writes their own problem (or their own short passage question) that meets a given condition, then solves it.
-- Make word problems multi-step and require students to justify why their approach works, not just compute.
+- Make applied problems multi-step and require students to justify why their approach works, not just compute.
 - Multiple choice distractors should reflect subtle reasoning errors, not careless mistakes.
 - Add a "Going Deeper" prompt that connects the skill to a real-world or cross-subject application.
 - The Bonus Challenge should require genuine problem-solving or proof-style reasoning, not just a harder calculation.`,
   };
-  const purposeGuide = { practice:"Lesson practice — right after instruction. Include a worked example or hint box. 12–15 questions.", homework:"Homework — completable independently in 15–20 min. No new concepts. 10–12 questions.", review:"SBAC/test review — mirror SBAC format. Include select-all-that-apply, constructed response, explain-your-thinking. 14–18 questions.", finisher:"Early finisher — engaging self-contained challenge. 8–10 rich questions.", assessment:"Quick assessment — tight focus on one skill. 6–8 questions max. Student self-assessment checkbox at bottom." };
 
   const subjectTopics = TOPICS[grade]?.[subjectId] || TOPICS[5].ela;
   const randomTopic = pickFreshTopic(grade, subjectId, subjectTopics);
 
-  return `You are creating a complete ${gradeLabel} grade California CCSS-aligned worksheet. Output ONLY structured plain text using exactly the section markers below. Follow the structure EXACTLY — do not move, rename, or skip any block.
+  // ── Section assembly: subject-shaped structure with running question numbers ──
+  const line = "_______________________________________________";
+  const hasPassage = !!std.passage;
+  let n = 0;
+  const next = () => ++n;
+  const sec = [];
+  const key = [];
+
+  const shortAnswerBlock = (heading, count, hint, extra) => {
+    if (count < 1) return;
+    const nums = [];
+    let t = `[SECTION: ${heading}]\nTYPE: short_answer\n`;
+    for (let i = 0; i < count; i++) {
+      const q = next(); nums.push(q);
+      t += `${q}. (${hint})${extra ? `  ${extra}` : ""}\n${line}\n${line}\n\n`;
+    }
+    sec.push(t.trimEnd());
+    key.push(`${heading}:\n` + nums.map(q => `${q}. (answer with brief explanation)`).join("\n"));
+  };
+
+  const mcBlock = (heading, count) => {
+    if (count < 1) return;
+    const nums = [];
+    let t = `[SECTION: ${heading}]\nTYPE: multiple_choice\n`;
+    for (let i = 0; i < count; i++) {
+      const q = next(); nums.push(q);
+      t += `${q}. (complete question with real content)\n   A. (option)\n   B. (option)\n   C. (option)\n   D. (option)\n\n`;
+    }
+    sec.push(t.trimEnd());
+    key.push(`${heading}:\n` + nums.map(q => `${q}. (letter) - (why correct; what error each wrong answer represents)`).join("\n"));
+  };
+
+  const workBlock = (heading, count, hint) => {
+    if (count < 1) return;
+    const nums = [];
+    let t = `[SECTION: ${heading}]\nTYPE: word_problem\n`;
+    for (let i = 0; i < count; i++) {
+      const q = next(); nums.push(q);
+      t += `${q}. (${hint})\n\nShow your work:\n[WORK BOX]\n\nAnswer: _______________\n\n`;
+    }
+    sec.push(t.trimEnd());
+    key.push(`${heading}:\n` + nums.map(q => `${q}. (full solution with steps)`).join("\n"));
+  };
+
+  const explainBlock = (heading, count, hint) => {
+    if (count < 1) return;
+    const nums = [];
+    let t = `[SECTION: ${heading}]\nTYPE: explain\n`;
+    for (let i = 0; i < count; i++) {
+      const q = next(); nums.push(q);
+      t += `${q}. (${hint})\n\n${line}\n${line}\n${line}\n${line}\n\n`;
+    }
+    sec.push(t.trimEnd());
+    key.push(`${heading}:\n` + nums.map(q => `${q}. (example of a strong student response)`).join("\n"));
+  };
+
+  let directionsHint = "Clear 1-2 sentence student directions";
+  let bonusHint = "One harder higher-order thinking challenge question";
+
+  if (subjectId === "writing") {
+    // Writing worksheets are built around the writing process, not question drills.
+    directionsHint = `State the FULL writing prompt here in student-friendly ${gradeLabel} grade words. This is the writing task the whole page is about`;
+    bonusHint = "One optional challenge upgrade for early finishers, like adding dialogue, a stronger hook, or a precise sensory detail";
+    const q1 = next(), q2 = next();
+    sec.push(`[SECTION: Plan Your Writing]\nTYPE: word_problem\n${q1}. Brainstorm: (a short task telling students to list their ideas, details, or reasons for THIS prompt inside the box)\n\n[WORK BOX]\n\n${q2}. Organize: (a short task telling students to put their ideas in order: beginning/middle/end for narrative, opinion plus reasons for opinion, topic plus grouped facts for informative)\n\n[WORK BOX]\n`);
+    key.push(`Plan Your Writing:\n${q1}. (sample brainstorm notes a strong student might write)\n${q2}. (a sample organizer for this prompt)`);
+    const q3 = next();
+    sec.push(`[SECTION: Write Your Draft]\nTYPE: explain\n${q3}. (restate the writing task in one sentence and tell students to write their full response on the lines below)\n\n${(line + "\n").repeat(gs.draftLines).trimEnd()}\n`);
+    key.push(`Write Your Draft:\n${q3}. (describe what a strong ${gradeLabel} grade response includes for ${std.codes}, then give a 3-4 sentence sample excerpt)`);
+    const checkNums = [];
+    let t = `[SECTION: Check Your Work]\nTYPE: short_answer\n`;
+    for (let i = 0; i < 3; i++) {
+      const q = next(); checkNums.push(q);
+      t += `${q}. (a yes/no self-check item tied to ${std.codes}, written as a question the student answers about their own draft)   YES / NO\n${line}\n\n`;
+    }
+    sec.push(t.trimEnd());
+    key.push(`Check Your Work:\n` + checkNums.map(q => `${q}. (what this check item verifies and what a fix looks like)`).join("\n"));
+  } else if (subjectId === "ela" && hasPassage) {
+    // Reading worksheets are built around the passage: comprehension, evidence, vocabulary, response.
+    mcBlock("Check Understanding", mcCount);
+    shortAnswerBlock("Find the Evidence", pp.apply, "question that requires quoting or citing a specific detail, sentence, or example from the passage");
+    shortAnswerBlock("Vocabulary in Context", pp.warm, "question about a word or phrase from the passage: its meaning from context, or literal vs nonliteral use");
+    explainBlock("Written Response", pp.explain, "question requiring a written response about the passage with evidence to support the answer");
+  } else {
+    // Math, Science, Social Studies, and non-passage ELA (grammar) share the classic arc with subject-shaped applied sections.
+    const applyPlans = {
+      math:    { heading:"Show Your Work",         type:"work",  hint:"multi-step word problem with a real-world context and real numbers" },
+      science: { heading:"Investigate & Apply",    type:"work",  hint:"scenario or data-based problem where students apply the science idea, interpret an investigation, or work with simple data" },
+      social:  { heading:"Think Like a Historian", type:"short", hint:"application question asking students to explain cause and effect, compare, sequence events, or connect history to their community" },
+      ela:     { heading:"Apply the Rule",         type:"short", hint:"question where students apply the language rule: fix a sentence, choose the correct form, or write their own example" },
+    };
+    const ap = applyPlans[subjectId] || applyPlans.math;
+    shortAnswerBlock("Warm-Up", pp.warm, "quick warm-up question that activates prior knowledge of this skill");
+    mcBlock("Multiple Choice", mcCount);
+    if (ap.type === "work") workBlock(ap.heading, pp.apply, ap.hint);
+    else shortAnswerBlock(ap.heading, pp.apply, ap.hint);
+    explainBlock("Explain Your Thinking", pp.explain, "question requiring explanation of a strategy, method, or reasoning");
+  }
+
+  const totalQuestions = n;
+  const sectionText = sec.join("\n\n");
+  const keyText = key.join("\n\n");
+
+  return `You are creating a complete ${gradeLabel} grade California standards-aligned worksheet. Output ONLY structured plain text using exactly the section markers below. Follow the structure EXACTLY - do not move, rename, or skip any block. This worksheet has exactly ${totalQuestions} numbered questions plus one bonus.
 
 DETAILS:
 - Grade: ${gradeLabel} Grade
-- Subject: ${subjectId.toUpperCase()} — ${resourceType}
+- Subject: ${subjectId.toUpperCase()} - ${resourceType}
 - Standards: ${std.codes}
 - Focus: ${std.focus}
 - Skills: ${std.skills.join(", ")}
-- Purpose: ${purposeGuide[purpose] || purposeGuide.practice}
+- Purpose: ${pp.guide}
 - Difficulty: ${diffGuide[difficulty] || diffGuide.on}
 ${topic ? `- Topic: ${topic}` : ""}
 
-EXACT STRUCTURE — copy these markers verbatim, fill in content only inside the parentheses:
+EXACT STRUCTURE - copy these markers verbatim, fill in content only inside the parentheses:
 
 [TITLE]
 (Engaging specific title)
@@ -349,111 +471,37 @@ EXACT STRUCTURE — copy these markers verbatim, fill in content only inside the
 ${gradeLabel} Grade · ${subjectId.toUpperCase()} · ${std.codes}
 
 [DIRECTIONS]
-(Clear 1–2 sentence student directions)
+(${directionsHint})
 
-${std.passage ? `[PASSAGE]
-(YOUR PASSAGE TITLE IN ALL CAPS — e.g. THE CALIFORNIA GOLD RUSH)
-(Your original 150-200 word passage goes here. Write ONLY the passage text. No instructions. No brackets. No placeholders. Real sentences only. Start writing the passage immediately after the title line.)
+${hasPassage ? `[PASSAGE]
+(YOUR PASSAGE TITLE IN ALL CAPS)
+(Your original ${gs.passageWords} word passage goes here. ${gs.passageStyle} Write ONLY the passage text. No instructions. No brackets. No placeholders. Real sentences only. Start writing the passage immediately after the title line.)
 
-` : ""}[SECTION: Warm-Up]
-TYPE: short_answer
-1. (question)
-_______________________________________________
-
-2. (question)
-_______________________________________________
-
-3. (question)
-_______________________________________________
-
-[SECTION: Multiple Choice]
-TYPE: multiple_choice
-4. (complete question with real numbers)
-   A. (common student error answer)
-   B. (correct answer)
-   C. (common student error answer)
-   D. (common student error answer)
-
-5. (complete question)
-   A. (option)
-   B. (option)
-   C. (option)
-   D. (option)
-
-6. (complete question)
-   A. (option)
-   B. (option)
-   C. (option)
-   D. (option)
-
-7. (complete question)
-   A. (option)
-   B. (option)
-   C. (option)
-   D. (option)
-
-[SECTION: Show Your Work]
-TYPE: word_problem
-8. (multi-step word problem with California context and real numbers)
-
-Show your work:
-[WORK BOX]
-
-Answer: _______________
-
-9. (word problem requiring interpretation, not just computation)
-
-Show your work:
-[WORK BOX]
-
-Answer: _______________
-
-[SECTION: Explain Your Thinking]
-TYPE: explain
-10. (question requiring explanation of a strategy or method)
-
-_______________________________________________
-_______________________________________________
-_______________________________________________
-_______________________________________________
+` : ""}${sectionText}
 
 [BONUS]
-(One harder higher-order thinking challenge question)
+(${bonusHint})
 
-_______________________________________________
-_______________________________________________
-_______________________________________________
+${line}
+${line}
+${line}
 
 [ANSWER KEY]
-Warm-Up:
-1. (answer with brief explanation)
-2. (answer with brief explanation)
-3. (answer with brief explanation)
+${keyText}
 
-Multiple Choice:
-4. (letter) — (why correct; what error each wrong answer represents)
-5. (letter) — (brief explanation)
-6. (letter) — (brief explanation)
-7. (letter) — (brief explanation)
-
-Word Problems:
-8. (full solution with steps)
-9. (full solution with steps)
-
-Explain: (example of strong student response)
-Bonus: (full solution)
+Bonus: (full solution or sample response)
 
 [TEACHER NOTES]
 Standards: ${std.codes}
-Tips: (2–3 sentences on differentiation, misconceptions, suggested use)
+Tips: (2-3 sentences on differentiation, misconceptions, suggested use)
 
 RULES:
-- No placeholder text ever. Real numbers and scenarios only.
-- Student-friendly warm tone appropriate for ${gradeLabel} grade.
+- No placeholder text ever. Real content, numbers, and scenarios only.
+- Student-friendly tone for ${gradeLabel} grade: ${gs.tone}.
+- Every question must stay within the ${gradeLabel} grade standards listed above. Do not drift above or below grade level.
 - CRITICAL VARIATION RULE: Every generation must feel completely fresh and different. Never reuse the same passage topic, scenario, character names, or context from previous generations.
 - For passages: use the assigned topic below. Do not default to generic topics.
-- For math: use different real-world California contexts every time.
-- For word problems: use different student names and scenarios every time.
+- For applied problems: use different student names, places, and scenarios every time, with California contexts where natural.
 - Generate as if this is the first and only time you are creating this type of worksheet.
 - TOPIC FOR THIS WORKSHEET: ${randomTopic}. Build your passage, scenarios, and examples around this specific topic.${diffStructure[difficulty] || ""}`;
 }
