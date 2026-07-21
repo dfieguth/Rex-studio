@@ -191,10 +191,10 @@ const STANDARDS = {
 
 const TOPICS = {
   5: {
-    ela: ["the California Gold Rush and the forty-niners","California missions and their impact on Native peoples","the transcontinental railroad and Chinese workers","the California aqueduct and water systems","the 1906 San Francisco earthquake and rebuilding","California's Central Valley farming and agriculture","Native California tribes and their traditions","the history of California becoming the 31st state","California wildfires and the bravery of firefighters","the Channel Islands National Park and its wildlife","the American Revolution and its causes","the Underground Railroad and Harriet Tubman","immigration through Ellis Island in the early 1900s","the Declaration of Independence and its meaning","the Dust Bowl and the migration of families to California","monarch butterfly migration through California","the water cycle and California droughts","volcanoes and plate tectonics","the life cycle of Pacific salmon in California rivers","ocean ecosystems and kelp forests off the California coast","animal adaptations in the Mojave Desert","renewable energy and solar power in California","the science of earthquakes and seismology","wolves and their role in balancing ecosystems","rainforest biodiversity and the canopy layer","deep sea creatures and bioluminescence","coral reefs and ocean health","the International Space Station and astronaut life","Mars exploration and NASA rovers","weather systems and how hurricanes form","Cesar Chavez and the farmworkers movement","Amelia Earhart and the history of aviation","Thomas Edison and the invention of the lightbulb","Maya Lin and the Vietnam Veterans Memorial","Sally Ride — America's first woman in space","John Muir and the California conservation movement","Thurgood Marshall and the fight for civil rights","Malala Yousafzai and the right to education","Neil Armstrong and the Apollo 11 moon landing","Nikola Tesla and the development of electricity","the history of the Olympic Games","how California grows half of America's fruits and vegetables","the Pony Express and early American communication","the history of the Golden Gate Bridge","how national parks were created and why they matter","how newspapers shaped American democracy","the history of the public library in America","how the US Constitution protects our rights","the history of women's suffrage and the 19th Amendment","the history of Braille and Louis Braille","Jackie Robinson and breaking baseball's color barrier","Rosa Parks and the Montgomery Bus Boycott","the Wright brothers and the first airplane flight","Katherine Johnson and the math behind the moon landing","the history of the Panama Canal","Angel Island and immigration on the West Coast","the Great Chicago Fire and how the city rebuilt","how vaccines were discovered and how they work","the return of the California sea otter from near extinction","how the printing press changed the world","the history of Route 66 and the American road trip","how weather satellites help predict dangerous storms","the life and inventions of George Washington Carver","the history of the telegraph and instant communication","Ruby Bridges and school integration","the redwood forests and the tallest trees on Earth","the Tuskegee Airmen and their service in World War II","how the Grand Canyon formed over millions of years","the Navajo Code Talkers of World War II","the mystery of the lost Roanoke colony","Benjamin Banneker, self-taught scientist and surveyor","how sourdough bread became a San Francisco tradition","the California grizzly bear and the state flag","the history of Alcatraz Island","how astronauts train for life in space"],
-    math: ["planning a school fundraiser car wash","organizing a 5th grade graduation celebration","running a school supply store","tracking a classroom reading challenge","planning a school garden project","organizing a canned food drive for families","budgeting for a class field trip to the California Science Center","planning a school mural painting project","running a school recycling program","organizing a school book fair","calculating stats for a Little League baseball season","planning a school basketball tournament bracket","tracking a swim team's practice distances","organizing a school Olympics event","planning a class hiking trip in a California state park","tracking a soccer team's season scoring record","planning a school fun run fundraiser","calculating scores for a school spelling bee competition","running a school bake sale","planning a class Thanksgiving potluck","scaling recipes for a school cooking class","budgeting for a taco cart at a school carnival","calculating ingredients for a class pizza party","running a lemonade stand as a class economics project","planning a family road trip from Los Angeles to San Francisco","calculating distances between California national parks","budgeting for a family trip to Yosemite National Park","planning a community farmers market booth","tracking water usage during a California drought conservation effort","designing a classroom layout using area and perimeter","planning a school vegetable garden with raised beds","calculating materials needed for a school bench project","measuring and tiling a school bathroom floor","designing a new playground for the school yard","analyzing rainfall data for California cities","tracking daily temperatures across California regions","calculating the cost of solar panels for the school roof","analyzing results from a class science experiment","tracking plant growth measurements in a class experiment","planning a birthday party on a budget","calculating sales tax at a California store","comparing prices at two different grocery stores","budgeting a weekly allowance over a school year","calculating earnings from a neighborhood dog walking business","planning a clothing donation drive for families","calculating postage costs for a pen pal project","budgeting for new classroom library books","tracking miles walked in a school step challenge","calculating the cost of a class subscription to a science magazine","planning a school talent show ticket sales and seating","planning a school science fair with display boards and prizes","calculating batting averages for a softball team","designing a mini golf course with area and perimeter","stocking a classroom aquarium and calculating water volume","comparing cell phone plans for a family","dividing sheet cakes into equal fraction servings for a fair","converting recipe measurements for the school bake-off","mapping a treasure hunt on a coordinate grid","calculating volume of storage boxes for classroom supplies","tracking stats for a school esports tournament","planning bus seating for a field trip to the Griffith Observatory","estimating the cost of a class trip to a Dodgers game","measuring rainfall in tenths of an inch for a weather log","calculating change and discounts at a school store sale","designing a raised planter box and its volume of soil","splitting a restaurant bill fairly among families","stocking a vending machine and counting profits","planning a movie night with ticket and snack sales","calculating elapsed time for a school relay race schedule","building a birdhouse and measuring the wood pieces","ordering paint for an art mural using fractions of cans","graphing a week of screen time and finding patterns","planning a 5th grade yearbook with page counts and costs","calculating the perimeter fencing for a school chicken coop","converting metric measurements for a science olympiad"],
-    science: ["how plants make food through photosynthesis","food webs in a California oak woodland ecosystem","the role of decomposers in a healthy forest","how energy moves through a food chain","producers, consumers, and decomposers in a tide pool","how drought affects plant and animal life in California","the life cycle of a California condor","how bees pollinate flowers and support food production","invasive species and their impact on California ecosystems","how salmon depend on healthy rivers to reproduce","how human activity disrupts food webs","the role of fungi in breaking down dead matter","how photosynthesis supports all life on Earth","properties of matter — solids, liquids, and gases","physical and chemical changes in everyday materials","how mixtures and solutions are different","conservation of matter in a chemical reaction","gravity and how it affects objects on Earth","how energy transfers from the sun to living things","density and why objects float or sink in water","how heat energy moves through conduction and convection","the properties of light and how shadows form","magnetism and how it works in everyday life","how forces affect the motion of objects","the difference between potential and kinetic energy","Earth's layers — crust, mantle, outer core, and inner core","how the water cycle works in California","why Earth's climate varies across different regions","how plate tectonics cause earthquakes and volcanoes","the role of the sun as Earth's main energy source","how humans affect Earth's land and water resources","the distribution of fresh water on Earth","how weathering and erosion shape California's landscape","Earth's atmosphere and its protective layers","how climate change affects California's weather patterns","the causes and effects of ocean pollution","how deforestation affects Earth's carbon cycle","how scientists design fair experiments","how to identify variables in a scientific investigation","how engineers use the design process to solve problems","how scientists analyze data and draw conclusions","how scientific models help us understand the natural world","the difference between a hypothesis and a theory","how technology helps scientists study Earth from space","how citizen scientists help track environmental changes","the history of the scientific method from Galileo to today","how scientists use evidence to change their thinking","how the moon affects Earth's ocean tides","the rock cycle and how rocks change over time","how animals adapt to survive California's rainy season","why the sun looks brighter than other stars","how shadows and the sun's path change with the seasons","the phases of the moon and why they repeat","how condensation forms on a cold glass","why salt seems to disappear when stirred into water","how baking soda and vinegar show a chemical change","comparing the mass of ingredients before and after mixing","how Earth's gravity keeps the moon in orbit","how wetlands filter and clean water naturally","the journey of a plastic bottle through the recycling system","how compost turns food scraps into soil","why the ocean matters to California's weather","how groundwater collects in aquifers","the role of kelp forests in storing carbon","how scientists track migrating whales with satellite tags","how mushrooms and molds get their food","how a terrarium models Earth's water cycle","why some materials dissolve and others do not","how the tilt of Earth causes the seasons","how scientists classify stars by brightness and distance","what happens to matter when a candle burns","how ocean currents move heat around the planet","how a food web changes when one species disappears","why conserving fresh water matters in the American West","how scientists use models to predict wildfire behavior"],
-    social: ["Native American life in California before European contact","the Maya civilization and their achievements in math and astronomy","the Aztec Empire and the city of Tenochtitlan","Christopher Columbus and the age of exploration","how Europeans and Native Americans first interacted","the Columbian Exchange — plants, animals, and diseases","daily life in a New England colonial town","the triangular trade and its impact on colonists and enslaved people","the Mayflower Compact and the idea of self-government","the role of religion in Colonial America","how colonial economies differed by region","life on a Southern plantation in Colonial America","the Boston Tea Party and colonial protests against Britain","how enslaved people resisted and preserved their culture","the role of colonial newspapers in spreading ideas","the causes of the American Revolution","the role of Paul Revere and the Minutemen at Lexington","Thomas Paine's Common Sense and its influence on colonists","the Battle of Saratoga as the turning point of the Revolution","the role of women in supporting the American Revolution","how the Continental Army survived the winter at Valley Forge","Benjamin Franklin's role as diplomat during the Revolution","the Constitutional Convention of 1787 and the Great Compromise","the Bill of Rights and why each amendment matters","how the three branches of government work together","checks and balances and why they protect democracy","the role of George Washington as the first president","how the Louisiana Purchase doubled the size of the United States","the Lewis and Clark Expedition across the Louisiana Territory","the Oregon Trail and the challenges of westward migration","the California Gold Rush of 1849","how the transcontinental railroad changed American commerce","the impact of westward expansion on Native American nations","the five geographic regions of the United States","how geography shaped where colonists chose to settle","major rivers and their importance to early American history","the Great Plains and how settlers adapted to the environment","how the Rocky Mountains affected the pace of westward expansion","the role of citizens in a democratic government","how a bill becomes a law in the United States","the importance of the freedom of speech and the press","how local, state, and federal governments are different","the Electoral College and how the president is elected","supply and demand in colonial trade","how mercantilism shaped the relationship between colonies and Britain","the role of money, barter, and trade in early America","how taxation without representation angered colonists","comparing the economies of Northern and Southern colonies","the role of the free press in American democracy","how the Erie Canal changed trade in early America","the Jamestown colony and its struggle to survive","the Pilgrims, the Wampanoag, and the first Thanksgiving","Benjamin Franklin's inventions and civic projects","the winter crossing of the Delaware and the Battle of Trenton","the Marquis de Lafayette and foreign help in the Revolution","the Treaty of Paris and the end of the Revolution","Shays' Rebellion and why the Articles of Confederation failed","the Federalists and Anti-Federalists debate the Constitution","the Whiskey Rebellion and testing the new government","Sacagawea's role in the Lewis and Clark expedition","the War of 1812 and the Star-Spangled Banner","the cotton gin and how it changed the South","the Trail of Tears and Indian removal","the Alamo and Texas independence","how the telegraph replaced the Pony Express","the Underground Railroad's secret routes north","Frederick Douglass and the power of his words","the Missouri Compromise and the spread of slavery","the Seneca Falls Convention and women's rights","mountain men and the fur trade of the West","the Mexican-American War and the Treaty of Guadalupe Hidalgo","the Homestead Act and claiming land on the plains","the Iroquois Confederacy's Great Law of Peace","how the Constitution can be amended over time","James Madison, father of the Constitution"],
+    ela: ["the California Gold Rush and the forty-niners","California missions and their impact on Native peoples","the transcontinental railroad and Chinese workers","the California aqueduct and water systems","the 1906 San Francisco earthquake and rebuilding","California's Central Valley farming and agriculture","Native California tribes and their traditions","the history of California becoming the 31st state","California wildfires and the bravery of firefighters","the Channel Islands National Park and its wildlife","the American Revolution and its causes","the Underground Railroad and Harriet Tubman","immigration through Ellis Island in the early 1900s","the Declaration of Independence and its meaning","the Dust Bowl and the migration of families to California","monarch butterfly migration through California","the water cycle and California droughts","volcanoes and plate tectonics","the life cycle of Pacific salmon in California rivers","ocean ecosystems and kelp forests off the California coast","animal adaptations in the Mojave Desert","renewable energy and solar power in California","the science of earthquakes and seismology","wolves and their role in balancing ecosystems","rainforest biodiversity and the canopy layer","deep sea creatures and bioluminescence","coral reefs and ocean health","the International Space Station and astronaut life","Mars exploration and NASA rovers","weather systems and how hurricanes form","Cesar Chavez and the farmworkers movement","Amelia Earhart and the history of aviation","Thomas Edison and the invention of the lightbulb","Maya Lin and the Vietnam Veterans Memorial","Sally Ride, America's first woman in space","John Muir and the California conservation movement","Thurgood Marshall and the fight for civil rights","Malala Yousafzai and the right to education","Neil Armstrong and the Apollo 11 moon landing","Nikola Tesla and the development of electricity","the history of the Olympic Games","how California grows half of America's fruits and vegetables","the Pony Express and early American communication","the history of the Golden Gate Bridge","how national parks were created and why they matter","how newspapers shaped American democracy","the history of the public library in America","how the US Constitution protects our rights","the history of women's suffrage and the 19th Amendment","the history of Braille and Louis Braille","Jackie Robinson and breaking baseball's color barrier","Rosa Parks and the Montgomery Bus Boycott","the Wright brothers and the first airplane flight","Katherine Johnson and the math behind the moon landing","the history of the Panama Canal","Angel Island and immigration on the West Coast","the Great Chicago Fire and how the city rebuilt","how vaccines were discovered and how they work","the return of the California sea otter from near extinction","how the printing press changed the world","the history of Route 66 and the American road trip","how weather satellites help predict dangerous storms","the life and inventions of George Washington Carver","the history of the telegraph and instant communication","Ruby Bridges and school integration","the redwood forests and the tallest trees on Earth","the Tuskegee Airmen and their service in World War II","how the Grand Canyon formed over millions of years","the Navajo Code Talkers of World War II","the mystery of the lost Roanoke colony","Benjamin Banneker, self-taught scientist and surveyor","how sourdough bread became a San Francisco tradition","the California grizzly bear and the state flag","the history of Alcatraz Island","how astronauts train for life in space"],
+    math: ["planning a school fundraiser car wash","organizing a 5th grade graduation celebration","running a school supply store","tracking a classroom reading challenge","planning a school garden project","organizing a canned food drive for families","budgeting for a class field trip to the California Science Center","planning a school mural painting project","running a school recycling program","organizing a school book fair","calculating stats for a Little League baseball season","planning a school basketball tournament bracket","tracking a swim team's practice distances","organizing a school Olympics event","planning a class hiking trip in a California state park","tracking a soccer team's season scoring record","planning a school fun run fundraiser","calculating scores for a school spelling bee competition","running a school bake sale","planning a class Thanksgiving potluck","scaling recipes for a school cooking class","budgeting for a taco cart at a school carnival","calculating ingredients for a class pizza party","running a lemonade stand as a class economics project","planning a family road trip from Los Angeles to San Francisco","calculating distances between California national parks","budgeting for a family trip to Yosemite National Park","planning a community farmers market booth","tracking water usage during a California drought conservation effort","designing a classroom layout using area and perimeter","planning a school vegetable garden with raised beds","calculating materials needed for a school bench project","measuring and tiling a school bathroom floor","designing a new playground for the school yard","analyzing rainfall data for California cities","tracking daily temperatures across California regions","calculating the cost of solar panels for the school roof","analyzing results from a class science experiment","tracking plant growth measurements in a class experiment","planning a birthday party on a budget","estimating the total cost of a family grocery trip","comparing prices at two different grocery stores","budgeting a weekly allowance over a school year","calculating earnings from a neighborhood dog walking business","planning a clothing donation drive for families","calculating postage costs for a pen pal project","budgeting for new classroom library books","tracking miles walked in a school step challenge","calculating the cost of a class subscription to a science magazine","planning a school talent show ticket sales and seating","planning a school science fair with display boards and prizes","planning equipment and snack costs for a softball season","designing a mini golf course with area and perimeter","stocking a classroom aquarium and calculating water volume","comparing cell phone plans for a family","dividing sheet cakes into equal fraction servings for a fair","converting recipe measurements for the school bake-off","mapping a treasure hunt on a coordinate grid","calculating volume of storage boxes for classroom supplies","tracking stats for a school esports tournament","planning bus seating for a field trip to the Griffith Observatory","estimating the cost of a class trip to a Dodgers game","measuring rainfall in tenths of an inch for a weather log","calculating change for customers at a school store sale","designing a raised planter box and its volume of soil","splitting a restaurant bill fairly among families","stocking a vending machine and counting profits","planning a movie night with ticket and snack sales","calculating elapsed time for a school relay race schedule","building a birdhouse and measuring the wood pieces","ordering paint for an art mural using fractions of cans","graphing a week of screen time and finding patterns","planning a 5th grade yearbook with page counts and costs","calculating the perimeter fencing for a school chicken coop","converting metric measurements for a science olympiad"],
+    science: ["how plants make food through photosynthesis","food webs in a California oak woodland ecosystem","the role of decomposers in a healthy forest","how energy moves through a food chain","producers, consumers, and decomposers in a tide pool","how drought affects plant and animal life in California","the life cycle of a California condor","how bees pollinate flowers and support food production","invasive species and their impact on California ecosystems","how salmon depend on healthy rivers to reproduce","how human activity disrupts food webs","the role of fungi in breaking down dead matter","how photosynthesis supports all life on Earth","properties of matter: solids, liquids, and gases","physical and chemical changes in everyday materials","how mixtures and solutions are different","conservation of matter in a chemical reaction","gravity and how it affects objects on Earth","how energy transfers from the sun to living things","density and why objects float or sink in water","measuring the weight of ice before and after it melts","how mixtures can be separated by filtering and evaporation","why matter is made of particles too small to see","how Earth's four spheres interact during a storm","how animals get energy from the food they eat","Earth's layers: crust, mantle, outer core, and inner core","how the water cycle works in California","why Earth's climate varies across different regions","how plate tectonics cause earthquakes and volcanoes","the role of the sun as Earth's main energy source","how humans affect Earth's land and water resources","the distribution of fresh water on Earth","how weathering and erosion shape California's landscape","Earth's atmosphere and its protective layers","how climate change affects California's weather patterns","the causes and effects of ocean pollution","how deforestation affects Earth's carbon cycle","how scientists design fair experiments","how to identify variables in a scientific investigation","how engineers use the design process to solve problems","how scientists analyze data and draw conclusions","how scientific models help us understand the natural world","the difference between a hypothesis and a theory","how technology helps scientists study Earth from space","how citizen scientists help track environmental changes","the history of the scientific method from Galileo to today","how scientists use evidence to change their thinking","how Earth's rotation gives us day and night","the rock cycle and how rocks change over time","how animals adapt to survive California's rainy season","why the sun looks brighter than other stars","how shadows and the sun's path change with the seasons","the phases of the moon and why they repeat","how condensation forms on a cold glass","why salt seems to disappear when stirred into water","how baking soda and vinegar show a chemical change","comparing the mass of ingredients before and after mixing","how Earth's gravity keeps the moon in orbit","how wetlands filter and clean water naturally","the journey of a plastic bottle through the recycling system","how compost turns food scraps into soil","why the ocean matters to California's weather","how groundwater collects in aquifers","the role of kelp forests in storing carbon","how scientists track migrating whales with satellite tags","how mushrooms and molds get their food","how a terrarium models Earth's water cycle","why some materials dissolve and others do not","how the tilt of Earth causes the seasons","how scientists classify stars by brightness and distance","what happens to matter when a candle burns","how ocean currents move heat around the planet","how a food web changes when one species disappears","why conserving fresh water matters in the American West","how scientists use models to predict wildfire behavior"],
+    social: ["Native American life in California before European contact","the Maya civilization and their achievements in math and astronomy","the Aztec Empire and the city of Tenochtitlan","Christopher Columbus and the age of exploration","how Europeans and Native Americans first interacted","the Columbian Exchange: plants, animals, and diseases","daily life in a New England colonial town","the triangular trade and its impact on colonists and enslaved people","the Mayflower Compact and the idea of self-government","the role of religion in Colonial America","how colonial economies differed by region","life on a Southern plantation in Colonial America","the Boston Tea Party and colonial protests against Britain","how enslaved people resisted and preserved their culture","the role of colonial newspapers in spreading ideas","the causes of the American Revolution","the role of Paul Revere and the Minutemen at Lexington","Thomas Paine's Common Sense and its influence on colonists","the Battle of Saratoga as the turning point of the Revolution","the role of women in supporting the American Revolution","how the Continental Army survived the winter at Valley Forge","Benjamin Franklin's role as diplomat during the Revolution","the Constitutional Convention of 1787 and the Great Compromise","the Bill of Rights and why each amendment matters","how the three branches of government work together","checks and balances and why they protect democracy","the role of George Washington as the first president","how the Louisiana Purchase doubled the size of the United States","the Lewis and Clark Expedition across the Louisiana Territory","the Oregon Trail and the challenges of westward migration","the California Gold Rush of 1849","how the transcontinental railroad changed American commerce","the impact of westward expansion on Native American nations","the five geographic regions of the United States","how geography shaped where colonists chose to settle","major rivers and their importance to early American history","the Great Plains and how settlers adapted to the environment","how the Rocky Mountains affected the pace of westward expansion","the role of citizens in a democratic government","how a bill becomes a law in the United States","the importance of the freedom of speech and the press","how local, state, and federal governments are different","the Electoral College and how the president is elected","supply and demand in colonial trade","how mercantilism shaped the relationship between colonies and Britain","the role of money, barter, and trade in early America","how taxation without representation angered colonists","comparing the economies of Northern and Southern colonies","the role of the free press in American democracy","how the Erie Canal changed trade in early America","the Jamestown colony and its struggle to survive","the Pilgrims, the Wampanoag, and the first Thanksgiving","Benjamin Franklin's inventions and civic projects","the winter crossing of the Delaware and the Battle of Trenton","the Marquis de Lafayette and foreign help in the Revolution","the Treaty of Paris and the end of the Revolution","Shays' Rebellion and why the Articles of Confederation failed","the Federalists and Anti-Federalists debate the Constitution","the Whiskey Rebellion and testing the new government","Sacagawea's role in the Lewis and Clark expedition","the War of 1812 and the Star-Spangled Banner","the cotton gin and how it changed the South","the Trail of Tears and Indian removal","the Alamo and Texas independence","how the telegraph replaced the Pony Express","the Underground Railroad's secret routes north","Frederick Douglass and the power of his words","the Missouri Compromise and the spread of slavery","the Seneca Falls Convention and women's rights","mountain men and the fur trade of the West","the Mexican-American War and the Treaty of Guadalupe Hidalgo","the Homestead Act and claiming land on the plains","the Iroquois Confederacy's Great Law of Peace","how the Constitution can be amended over time","James Madison, father of the Constitution"],
     writing: ["should students have homework every night","should schools have a school uniform policy","should recess be longer in elementary school","should students be allowed to use tablets in class every day","should schools serve healthier food in the cafeteria","should physical education be required every school day","should students be able to choose their own reading books","should schools start later in the morning for better sleep","should students learn a second language starting in kindergarten","should schools ban junk food and sugary drinks","should students have a say in creating classroom rules","should school libraries have more graphic novels and comics","should there be limits on screen time for kids","a day when everything went wrong but turned out okay","the day you discovered a hidden talent","a time you showed courage when it was difficult","your most memorable family tradition or celebration","a day exploring a California state park or beach","the best lesson a grandparent or elder ever taught you","a time you had to solve a really difficult problem","a moment when you felt genuinely proud of yourself","a time you tried something completely new and unexpected","the day you made an unexpected friendship","a time you helped someone who really needed it","the most important thing you learned in 5th grade","explain how the water cycle works and why it matters","describe how the three branches of US government are organized","explain why California is called the Golden State","describe the importance of the Bill of Rights to Americans today","explain how photosynthesis supports all life on Earth","describe the main causes of the American Revolution","explain how earthquakes happen and how scientists measure them","describe the journey and hardships of a California Gold Rush miner","explain the importance of water conservation in California","describe how a bill becomes a law in the United States","a letter from a student to their school principal","a diary entry written by a colonial child in 1750","a news report about an important school event","a letter from a Gold Rush miner to their family back home","a travel brochure for a California national park","a book review of a favorite novel read this year","an advertisement for a school fundraiser event","a thank-you letter to a community hero or mentor","a letter to a future 5th grader about what to expect","explain what makes a good leader using a historical example","describe a California landmark and why it is important","a speech to convince the school board to add an art program","explain the importance of voting in a democracy","describe the most interesting thing you learned in science this year","a letter from a student to their favorite author","should 5th graders be allowed to bring cell phones to school","should zoos exist to protect endangered animals","should kids earn allowance for doing chores","should plastic bags be banned in California stores","should every school day include silent reading time","should students help plan the school lunch menu","the day you taught someone something for the first time","a time a plan failed and you improvised","the bravest thing you ever watched someone do","a family story that gets told again and again","the moment you realized you had grown up a little","explain how the Columbian Exchange changed both hemispheres","explain how volcanoes and earthquakes are related","describe how the First Americans adapted to their regions","explain how recycling protects natural resources","describe how a food web keeps an ecosystem balanced","explain why the colonists objected to British taxes","a persuasive letter to the city council about a new park","a journal entry from a soldier at Valley Forge","a newspaper front page for July 4, 1776","a museum placard describing a pre-Columbian artifact","an interview with an explorer returning from the New World","a speech nominating a classmate for student council","a how-to guide for surviving the Oregon Trail","a letter to Congress about protecting national parks"],
   },
   4: {
@@ -319,29 +319,115 @@ function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic)
     extend: `ABOVE GRADE LEVEL / EXTENSION. This worksheet is for advanced students who have mastered the standard and need to be stretched. It must be STRUCTURALLY different from a standard worksheet, not just harder numbers.`,
   };
 
-  // Structural differentiation requirements injected into the prompt.
-  // These force genuinely different worksheets, not just reworded ones.
+  // Structural differentiation: subject-shaped, grade-guarded, and bound to
+  // this worksheet's exact skills. Extension means DEPTH, not acceleration.
+  const gradeGuard = {
+    3: { support:"Every number and task must stay inside 3rd grade standards: multiplication and division within 100, fractions only with denominators 2, 3, 4, 6, and 8, no decimals anywhere.",
+         extend:"Stretch DEPTH, not acceleration. Stay inside 3rd grade standards. Do NOT use 4th grade content such as multi-digit multiplication, decimals, or adding unlike fractions. Harder thinking about the same standards." },
+    4: { support:"Every number and task must stay inside 4th grade standards: like-denominator fraction addition only, decimals to hundredths only, no brackets or order of operations.",
+         extend:"Stretch DEPTH, not acceleration. Stay inside 4th grade standards. Do NOT use 5th grade content such as unlike-denominator fraction addition, fraction division, volume formulas, or order of operations with brackets." },
+    5: { support:"Every number and task must stay inside 5th grade standards, with the simplest cases of each skill.",
+         extend:"Stretch DEPTH, not acceleration. Stay inside 5th grade standards. Do NOT use middle school content such as negative numbers, ratios, percents, or algebraic expressions beyond a letter for an unknown." },
+  };
+  const gg = gradeGuard[grade] || gradeGuard[4];
+
+  const supportPlans = {
+    math: `- Begin with a "Helpful Hints" box right after the directions with the key vocabulary, formulas, or steps.
+- Before question 1, include ONE fully worked example labeled "Example" showing every computation step for this exact skill.
+- Multiple choice: give only THREE answer choices (A, B, C), not four.
+- Use friendlier numbers within the grade (simpler fractions, smaller whole numbers, fewer regrouping steps).
+- Split every multi-step problem into labeled Part A and Part B.
+- Include one problem built around a described visual model (number line, array, or area model) the student completes.
+- Put a sentence frame on every written response, e.g. "I solved it by ______".`,
+    elaReading: `- Keep the passage shorter and use simpler sentence structure while keeping the same topic. Number the paragraphs.
+- Add a "Word Bank" box before the questions defining 3-4 tricky words FROM the passage in kid-friendly terms.
+- Before question 1, include ONE worked example labeled "Example" that answers an evidence question and names the paragraph where the answer was found.
+- Multiple choice: give only THREE answer choices (A, B, C), not four.
+- Ask questions in the same order the passage gives the information.
+- Put evidence sentence starters on written items: "The text says ______. This shows ______."`,
+    elaGrammar: `- Begin with a "Rules Box" right after the directions stating the target rule(s) with one clear example of each.
+- Before question 1, include ONE worked example labeled "Example" applying the rule step by step.
+- Multiple choice: give only THREE answer choices (A, B, C), not four.
+- Test one rule per question; no mixed-rule items.
+- For fix-it items, show the sentence and point out exactly which part needs fixing.
+- Put a sentence frame on every written response.`,
+    writing: `- Restate the prompt in the simplest possible words inside the directions.
+- In the Brainstorm box task, provide 2 example ideas already listed, and ask the student to add their own.
+- Make the Organize task a labeled frame (Beginning / Middle / End, or Opinion / Reason 1 / Reason 2).
+- Start the draft task with a paragraph frame containing blanks the student completes, then lines to continue.
+- Include a "Word Bank" of linking and temporal words that fit this genre.
+- Make every Check Your Work item concrete and observable, e.g. "Did I write my opinion in the first sentence?"`,
+    science: `- Begin with a "Word Bank" box defining the science vocabulary in kid-friendly terms.
+- Before question 1, include ONE worked example labeled "Example" that models the thinking out loud: "I notice ______, so I think ______ because ______."
+- Multiple choice: give only THREE answer choices (A, B, C), not four.
+- Put claim-evidence sentence frames on written items: "I claim ______ because I observed ______."
+- Keep any data simple: small tables, whole numbers, clear labels.
+- Split multi-part tasks into labeled Part A and Part B.`,
+    social: `- Begin with a "Word Bank" box listing the key names, places, and terms with kid-friendly meanings.
+- Before question 1, include ONE worked example labeled "Example" that answers a history question and tells where the answer comes from.
+- Multiple choice: give only THREE answer choices (A, B, C), not four.
+- Support sequence questions with a simple first / next / last structure or 3-step timeline to complete.
+- Put sentence frames on written items: "One cause was ______." "This changed life because ______."
+- Ask concrete recall questions before application questions.`,
+  };
+
+  const extendPlans = {
+    math: `- Replace the simple opening with an entry task that requires reasoning from question 1.
+- Include at least one ERROR ANALYSIS question: fictional student work containing a mistake real ${gradeLabel} graders make with this exact skill; find it, explain it, correct it. Write the student's complete work out in full as plain text lines under the question.
+- Include at least one CREATE-YOUR-OWN question: the student writes a problem meeting a stated condition, then solves it.
+- Make word problems multi-step and require students to justify why their approach works.
+- Multiple choice distractors must reflect subtle reasoning errors, not careless mistakes.
+- Add a "Going Deeper" prompt connecting the skill to a real-world application.
+- The Bonus must require proof-style reasoning or finding a general rule, not just bigger numbers.`,
+    elaReading: `- Keep the passage at grade level but make it inference-rich, so answers require reading between the lines.
+- Include at least one AUTHOR'S CRAFT question: why the author chose a particular word, detail, or structure.
+- The written response must require TWO different pieces of text evidence.
+- Include one CREATE-YOUR-OWN question: the student writes a strong question about the passage and answers it.
+- Include one synthesis question connecting the passage to a bigger idea or another context.
+- Multiple choice distractors must be plausible misreadings, not obviously wrong answers.`,
+    elaGrammar: `- Include an ERROR ANALYSIS task: a short fictional paragraph containing 2-3 rule errors to find and correct.
+- Include CREATE-YOUR-OWN sentence tasks meeting stated conditions, e.g. "write a compound sentence about ______".
+- Require students to explain WHY a correction is right by naming the rule.
+- Include sentence-combining and revise-for-style items, not just error spotting.
+- Multiple choice distractors must reflect near-miss grammar confusions.`,
+    writing: `- The prompt must require a specific craft move for this grade, such as dialogue, sensory detail, figurative language, or (for 5th grade opinion) addressing a counter-reason.
+- The Brainstorm task must require MORE ideas than needed, then choosing and starring the strongest.
+- The Organize task must plan multiple paragraphs, each with a stated job.
+- Include one REVISE-IT task: provide a weak sentence and have the student rewrite it stronger.
+- Check Your Work items must be about craft quality, not just completeness.
+- The Bonus must challenge the student to address a second audience or point of view.`,
+    science: `- The written response must require full claim-evidence-reasoning (CER): claim, observed evidence, and the science idea that connects them.
+- Include one DESIGN-A-TEST question: the student plans a fair test changing only one variable.
+- Include one ERROR ANALYSIS: a fictional student's wrong conclusion from an investigation; find the flaw and correct the reasoning. Write the student's conclusion out in full under the question.
+- Include data with one anomaly or outlier the student must notice and address.
+- Add a "Going Deeper" prompt connecting this concept to another science topic or real phenomenon.
+- Multiple choice distractors must reflect common science misconceptions.`,
+    social: `- Include one PERSPECTIVE question: how the same event was experienced differently by two different groups of people.
+- Include one cause-and-effect CHAIN: this led to ______, which led to ______.
+- Include one COMPARE question between two events, periods, or regions using a stated criterion.
+- Include one CREATE-YOUR-OWN task: design a museum exhibit label, a question to ask a historical figure, or a caption for a primary source, with the student's own answer.
+- Require an explanation of historical significance: why this still matters today.
+- Multiple choice distractors must reflect common history mix-ups.`,
+  };
+
+  const diffKey = subjectId === "ela" ? (std.passage ? "elaReading" : "elaGrammar") : subjectId;
+  const supportBody = supportPlans[diffKey] || supportPlans.math;
+  const extendBody = extendPlans[diffKey] || extendPlans.math;
+  const skillsBind = `- Every scaffold and challenge must target the exact skills of this worksheet: ${std.skills.join(", ")}.`;
+
   const diffStructure = {
     on: "",
     support: `
 DIFFERENTIATION REQUIREMENTS (WITH SUPPORT / BELOW GRADE LEVEL) - these are MANDATORY and override the default structure where they conflict:
-- Begin with a "Word Bank" or "Helpful Hints" box right after the directions, containing key vocabulary, formulas, or reminders the student will need.
-- Before question 1, include ONE fully worked example labeled "Example" that shows every step of the kind of problem the student is about to do.
-- Multiple choice: give only THREE answer choices (A, B, C), not four.
-- Use friendlier numbers that stay within this grade's standards (simpler fractions, smaller whole numbers, fewer regrouping steps).
-- Break multi-step problems into smaller labeled parts (Part A, Part B) so students attempt one step at a time.
-- Every written-response question must include a sentence starter or sentence frame on the answer line (e.g., "I know this because ______").
+${supportBody}
 - Reduce the total number of questions slightly so the page does not feel overwhelming.
-- Keep reading passages shorter and use simpler sentence structure, while keeping the same topic and standard.`,
+${skillsBind}
+- ${gg.support}`,
     extend: `
 DIFFERENTIATION REQUIREMENTS (EXTENSION / ABOVE GRADE LEVEL) - these are MANDATORY and override the default structure where they conflict:
-- Replace the simple opening section with a richer entry task that requires reasoning from the first question.
-- Include at least one ERROR ANALYSIS question: present a fictional student's completed work that contains a mistake, and ask the student to find the error, explain it, and correct it.
-- Include at least one CREATE-YOUR-OWN question where the student writes their own problem (or their own short passage question) that meets a given condition, then solves it.
-- Make applied problems multi-step and require students to justify why their approach works, not just compute.
-- Multiple choice distractors should reflect subtle reasoning errors, not careless mistakes.
-- Add a "Going Deeper" prompt that connects the skill to a real-world or cross-subject application.
-- The Bonus Challenge should require genuine problem-solving or proof-style reasoning, not just a harder calculation.`,
+${extendBody}
+${skillsBind}
+- ${gg.extend}`,
   };
 
   const subjectTopics = TOPICS[grade]?.[subjectId] || TOPICS[5].ela;
@@ -497,6 +583,9 @@ Tips: (2-3 sentences on differentiation, misconceptions, suggested use)
 
 RULES:
 - No placeholder text ever. Real content, numbers, and scenarios only.
+- Every question must be COMPLETE: full question text, every answer choice, and any data, pattern, table, or student work written out in full. Never reference a table, chart, picture, or work sample that is not fully written into the text.
+- Write any table or pattern as simple labeled text lines directly under the question (example: "Bags: 2, 4, 6, 8" then "Apples: 12, 24, 36, 48"). This worksheet is plain text; nothing can be drawn.
+- For select-all-that-apply questions, put the select-all instruction inside the numbered question text itself and label the choices A. through E.
 - Student-friendly tone for ${gradeLabel} grade: ${gs.tone}.
 - Every question must stay within the ${gradeLabel} grade standards listed above. Do not drift above or below grade level.
 - CRITICAL VARIATION RULE: Every generation must feel completely fresh and different. Never reuse the same passage topic, scenario, character names, or context from previous generations.
@@ -601,6 +690,9 @@ function renderSectionHTML(sec) {
     .replace(/^IMPORTANT:[^\n]+\n?/gim, "")
     .trim();
   const lines = cleanContent.split("\n");
+  const isQ = (s) => /^\d+\.\s+/.test(s);
+  const proseHTML = (t) => `<p style="font-size:13px;color:#374151;margin:4px 0;white-space:pre-wrap;">${t}</p>`;
+  const lineHTML = `<div style="border-bottom:1.5px solid #CBD5E1;height:28px;margin-bottom:4px;"></div>`;
   let html = "";
   let i = 0;
   while (i < lines.length) {
@@ -612,8 +704,13 @@ function renderSectionHTML(sec) {
       html += `<div style="margin-bottom:16px;display:flex;gap:10px;"><span style="font-weight:700;color:#374151;min-width:22px;font-size:14px;">${qNum}.</span><div style="flex:1;"><p style="margin:0 0 8px 0;font-size:14px;line-height:1.6;color:#1e293b;font-weight:500;">${qText}</p>`;
       if (sec.type === "multiple_choice") {
         let j = i + 1;
-        while (j < lines.length && lines[j].trim().match(/^[A-D]\./)) {
-          html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #CBD5E1;flex-shrink:0;"></div><span style="font-size:13px;color:#374151;">${lines[j].trim()}</span></div>`;
+        while (j < lines.length && !isQ(lines[j].trim())) {
+          const l = lines[j].trim();
+          if (/^[A-F]\./.test(l)) {
+            html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #CBD5E1;flex-shrink:0;"></div><span style="font-size:13px;color:#374151;">${l}</span></div>`;
+          } else if (l) {
+            html += proseHTML(l);
+          }
           j++;
         }
         i = j;
@@ -623,17 +720,27 @@ function renderSectionHTML(sec) {
           const wl = lines[i].trim();
           if (wl === "[WORK BOX]") { html += `<div style="border:2px dashed #CBD5E1;border-radius:10px;padding:12px;margin:8px 0;background:#F8FAFC;"><p style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 6px;">Show Your Work</p><div style="min-height:60px;"></div></div>`; i++; }
           else if (wl.startsWith("Answer:")) { html += `<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="font-size:12px;font-weight:600;color:#94A3B8;">Answer:</span><div style="border-bottom:1.5px solid #CBD5E1;flex:1;height:20px;"></div></div>`; i++; break; }
-          else if (wl.match(/^(\d+)\.|^\[/)) break;
-          else { if (wl) html += `<p style="font-size:13px;color:#374151;margin:2px 0;">${wl}</p>`; i++; }
+          else if (isQ(wl)) break;
+          else { if (wl) html += proseHTML(wl); i++; }
         }
       } else if (sec.type === "explain") {
         i++;
         let lc = 0;
-        while (i < lines.length && lines[i].trim().startsWith("___")) { lc++; i++; }
-        for (let k = 0; k < Math.max(lc, 4); k++) html += `<div style="border-bottom:1.5px solid #CBD5E1;height:28px;margin-bottom:4px;"></div>`;
+        while (i < lines.length && !isQ(lines[i].trim())) {
+          const l = lines[i].trim();
+          if (l.startsWith("___")) { lc++; html += lineHTML; }
+          else if (l) html += proseHTML(l);
+          i++;
+        }
+        for (let k = lc; k < 4; k++) html += lineHTML;
       } else {
         i++;
-        while (i < lines.length && lines[i].trim().startsWith("___")) { html += `<div style="border-bottom:1.5px solid #CBD5E1;height:28px;margin-bottom:4px;"></div>`; i++; }
+        while (i < lines.length && !isQ(lines[i].trim())) {
+          const l = lines[i].trim();
+          if (l.startsWith("___")) html += lineHTML;
+          else if (l) html += proseHTML(l);
+          i++;
+        }
       }
       html += `</div></div>`;
     } else { i++; }
@@ -897,6 +1004,7 @@ function tptRenderSection(sec) {
     .replace(/^\[SECTION:[^\]]+\]\n?/gim, "")
     .replace(/^TYPE:\s*\w+\n?/gim, "")
     .split("\n");
+  const isQ = (s) => /^\d+\.\s+/.test(s);
   const out = [];
   let i = 0;
   while (i < lines.length) {
@@ -907,30 +1015,47 @@ function tptRenderSection(sec) {
     const body = [];
     if (sec.type === "multiple_choice") {
       let j = i + 1;
-      while (j < lines.length && /^[A-D]\./.test(lines[j].trim())) {
-        const opt = lines[j].trim();
-        body.push(
-          <div key={j} className="tpt-choice">
-            <span className="tpt-bubble">{opt[0]}</span>
-            <span>{opt.slice(2).trim()}</span>
-          </div>
-        );
+      while (j < lines.length && !isQ(lines[j].trim())) {
+        const l = lines[j].trim();
+        if (/^[A-F]\./.test(l)) {
+          body.push(
+            <div key={j} className="tpt-choice">
+              <span className="tpt-bubble">{l[0]}</span>
+              <span>{l.slice(2).trim()}</span>
+            </div>
+          );
+        } else if (l) {
+          body.push(<p key={j} className="tpt-inline">{l}</p>);
+        }
         j++;
       }
       i = j;
     } else if (sec.type === "word_problem") {
       i++;
-      while (i < lines.length && !/^\d+\./.test(lines[i].trim())) {
+      while (i < lines.length && !isQ(lines[i].trim())) {
         const wl = lines[i].trim();
-        if (wl === "[WORK BOX]") body.push(<div key={i} className="tpt-workbox"><span className="tpt-worklabel">Show your work</span></div>);
-        else if (wl.startsWith("Answer:")) body.push(<div key={i} className="tpt-answerline"><span>Answer</span><div /></div>);
+        if (wl === "[WORK BOX]") body.push(
+          <div key={i} className="tpt-workbox"><span className="tpt-worklabel">Show your work</span></div>
+        );
+        else if (wl.startsWith("Answer:")) body.push(
+          <div key={i} className="tpt-answerline"><span>Answer</span><div /></div>
+        );
+        else if (wl && !wl.toLowerCase().startsWith("show your work")) body.push(
+          <p key={i} className="tpt-inline">{wl}</p>
+        );
         i++;
       }
     } else {
       i++;
-      let count = 0;
-      while (i < lines.length && lines[i].trim().startsWith("___")) { count++; i++; }
-      body.push(<TptLines key={"l" + i} n={Math.max(count, sec.type === "explain" ? 4 : 2)} />);
+      let lc = 0;
+      const min = sec.type === "explain" ? 4 : 2;
+      while (i < lines.length && !isQ(lines[i].trim())) {
+        const l = lines[i].trim();
+        if (l.startsWith("___")) { lc++; body.push(<div key={i} className="tpt-line" />); }
+        else if (l) body.push(<p key={i} className="tpt-inline">{l}</p>);
+        i++;
+      }
+      for (let k = lc; k < min; k++) body.push(<div key={"pad" + k} className="tpt-line" />);
     }
     out.push(
       <div key={q[1]} className="tpt-q">
@@ -976,6 +1101,7 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
         .tpt-qnum { font:800 14px 'Baloo 2',sans-serif; color:#fff; background:var(--accent); width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
         .tpt-qbody { flex:1; }
         .tpt-qtext { margin:0 0 8px; font-size:13.5px; line-height:1.55; font-weight:700; }
+        .tpt-inline { margin:4px 0; font-size:13px; line-height:1.5; white-space:pre-wrap; }
         .tpt-choice { display:flex; align-items:center; gap:9px; margin-bottom:6px; font-size:13px; }
         .tpt-bubble { width:19px; height:19px; border:1.8px solid var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 10px 'Baloo 2',sans-serif; flex-shrink:0; }
         .tpt-line { border-bottom:1.5px solid var(--rule); height:26px; }
@@ -1100,7 +1226,7 @@ export default function RexStudio() {
     setLoading(true); setError(""); setRawText(""); setParsed(null); setShowKey(false);
     try {
       const prompt = buildPrompt(grade, subject.id, safeType, difficulty, purpose, topic);
-      const result = await callClaude(prompt, apiKey, 4000);
+      const result = await callClaude(prompt, apiKey, 8000);
       setRawText(result);
       setParsed(parseWorksheet(result));
     } catch(e) { setError(e.message||"Something went wrong. Please try again."); }
