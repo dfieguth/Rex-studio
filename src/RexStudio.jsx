@@ -3,7 +3,7 @@ import {
   Sparkles, Printer, Copy, Check, ChevronDown,
   BookOpen, PenTool, FlaskConical, Globe, Calculator,
   Loader2, AlertCircle, Eye, EyeOff, ExternalLink, RefreshCw,
-  Package, Layout, Type
+  Package, Layout, Type, Download
 } from "lucide-react";
 
 // ─── GRADE LABEL HELPER ───────────────────────────────────────────────────────
@@ -748,14 +748,58 @@ function renderSectionHTML(sec) {
   return html;
 }
 
+// ─── PDF DOWNLOAD ─────────────────────────────────────────────────────────────
+// Loads html2pdf from a CDN the first time it is needed, then renders the
+// on-screen worksheet to a PDF and downloads it automatically. The separate
+// Print button still produces sharper vector text and stays available.
+function loadHtml2Pdf() {
+  if (typeof window === "undefined") return Promise.reject(new Error("No browser available."));
+  if (window.html2pdf) return Promise.resolve(window.html2pdf);
+  if (window.__rexPdfLoader) return window.__rexPdfLoader;
+  window.__rexPdfLoader = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+    s.onload = () => { if (window.html2pdf) resolve(window.html2pdf); else { window.__rexPdfLoader = null; reject(new Error("PDF tool did not load.")); } };
+    s.onerror = () => { window.__rexPdfLoader = null; reject(new Error("Could not load the PDF tool. Check your connection.")); };
+    document.body.appendChild(s);
+  });
+  return window.__rexPdfLoader;
+}
+
+function pdfFileName(parsed, subject, grade) {
+  const raw = (parsed && parsed.title ? parsed.title : "REX Worksheet") + " " + gradeOrdinal(grade) + " " + (subject && subject.label ? subject.label : "");
+  const clean = raw.replace(/[^A-Za-z0-9 _-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 90);
+  return (clean || "REX-Worksheet") + ".pdf";
+}
+
+async function saveWorksheetPdf(parsed, subject, grade) {
+  const html2pdf = await loadHtml2Pdf();
+  const el = document.querySelector(".rex-print-area");
+  if (!el) throw new Error("Generate a worksheet first.");
+  await html2pdf().set({
+    margin: [0.4, 0.35, 0.4, 0.35],
+    filename: pdfFileName(parsed, subject, grade),
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false },
+    jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q"] },
+  }).from(el).save();
+}
+
 function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
   const hc = subject.hc;
   const gradeLabel = gradeOrdinal(grade);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState("");
   return (
     <div>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2 rex-no-print">
         <div className="flex gap-2">
-          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-slate-300 transition-all"><Printer size={12}/> Print / PDF</button>
+          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-slate-300 transition-all"><Printer size={12}/> Print</button>
+          <button onClick={async()=>{setPdfBusy(true);setPdfError("");try{await saveWorksheetPdf(parsed,subject,grade);}catch(err){setPdfError(err.message||"Could not save the PDF.");}setPdfBusy(false);}} disabled={pdfBusy} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-slate-300 transition-all disabled:opacity-50">
+            {pdfBusy?<Loader2 size={12} className="animate-spin"/>:<Download size={12}/>} {pdfBusy?"Saving…":"Save as PDF"}
+          </button>
+          {pdfError&&<span className="text-xs text-red-500 self-center">{pdfError}</span>}
           <button onClick={onToggleKey} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${showKey?"bg-slate-800 text-white border-slate-800":"border-slate-200 text-slate-600 hover:border-slate-300"}`}>
             {showKey?<EyeOff size={12}/>:<Eye size={12}/>} {showKey?"Hide Key":"Answer Key"}
           </button>
@@ -1073,6 +1117,8 @@ function tptRenderSection(sec) {
 function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
   const hc = subject.hc;
   const ord = gradeOrdinal(grade);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState("");
   const passageLines = parsed.passage ? parsed.passage.split("\n") : [];
   return (
     <div className="tpt-scope" style={{ "--accent": hc }}>
@@ -1090,7 +1136,7 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
         .tpt-directions { display:flex; margin:16px 0 0; border:1.5px solid var(--rule); border-radius:8px; overflow:hidden; }
         .tpt-tab { background:var(--accent); color:#fff; font:700 11px 'Baloo 2',sans-serif; letter-spacing:1px; text-transform:uppercase; padding:10px 12px; display:flex; align-items:center; }
         .tpt-directions p { margin:0; padding:9px 12px; font-size:13.5px; line-height:1.5; }
-        .tpt-passage { margin:16px 0 0; padding:14px 16px; border:1.5px solid var(--rule); border-left:5px solid var(--accent); border-radius:8px; background:color-mix(in srgb, var(--accent) 4%, #fff); }
+        .tpt-passage { margin:16px 0 0; padding:14px 16px; border:1.5px solid var(--rule); border-left:5px solid var(--accent); border-radius:8px; background:${hc}0a; }
         .tpt-passage-title { font:800 14px 'Baloo 2',sans-serif; letter-spacing:1.5px; margin:0 0 6px; }
         .tpt-passage-body { margin:0 0 6px; font-size:13.5px; line-height:1.62; }
         .tpt-section { margin-top:20px; }
@@ -1109,7 +1155,7 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
         .tpt-worklabel { font:700 9.5px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--pencil); }
         .tpt-answerline { display:flex; align-items:flex-end; gap:8px; margin-top:8px; font:700 10px 'Baloo 2',sans-serif; text-transform:uppercase; letter-spacing:1px; color:var(--pencil); }
         .tpt-answerline div { border-bottom:1.5px solid var(--ink); height:16px; width:180px; }
-        .tpt-bonus { margin-top:22px; border:2px solid var(--accent); border-radius:12px; padding:12px 14px; background:color-mix(in srgb, var(--accent) 6%, #fff); }
+        .tpt-bonus { margin-top:22px; border:2px solid var(--accent); border-radius:12px; padding:12px 14px; background:${hc}0f; }
         .tpt-bonus-label { font:800 13px 'Baloo 2',sans-serif; letter-spacing:1px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; }
         .tpt-footer { display:flex; justify-content:space-between; margin-top:26px; padding-top:8px; border-top:1.5px solid var(--rule); font-size:9.5px; color:var(--pencil); }
         .tpt-dots { color:var(--accent); letter-spacing:3px; font-size:7px; }
@@ -1123,7 +1169,11 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
       `}</style>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2 rex-no-print">
         <div className="flex gap-2">
-          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-slate-300 transition-all"><Printer size={12}/> Print / PDF</button>
+          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-slate-300 transition-all"><Printer size={12}/> Print</button>
+          <button onClick={async()=>{setPdfBusy(true);setPdfError("");try{await saveWorksheetPdf(parsed,subject,grade);}catch(err){setPdfError(err.message||"Could not save the PDF.");}setPdfBusy(false);}} disabled={pdfBusy} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-slate-300 transition-all disabled:opacity-50">
+            {pdfBusy?<Loader2 size={12} className="animate-spin"/>:<Download size={12}/>} {pdfBusy?"Saving…":"Save as PDF"}
+          </button>
+          {pdfError&&<span className="text-xs text-red-500 self-center">{pdfError}</span>}
           <button onClick={onToggleKey} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${showKey?"bg-slate-800 text-white border-slate-800":"border-slate-200 text-slate-600 hover:border-slate-300"}`}>
             {showKey?<EyeOff size={12}/>:<Eye size={12}/>} {showKey?"Hide Key":"Answer Key"}
           </button>
