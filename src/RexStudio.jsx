@@ -45,6 +45,7 @@ const STANDARDS = {
       "Author's Purpose":        { codes:"5.RI.6, 5.RI.8, 5.RL.6", focus:"Author's purpose and point of view, evaluating evidence, fact vs opinion.", skills:["persuade/inform/entertain","author's bias","evaluating evidence","author's claim","fact vs opinion"], passage:true },
       "Text Evidence":           { codes:"5.RI.1, 5.RL.1, 5.W.9", focus:"Quoting accurately from text to explain and support inferences.", skills:["locating evidence","quoting correctly","evidence relevance","connecting to claim"], passage:true },
       "Compare & Contrast":      { codes:"5.RI.3, 5.RI.9, 5.RL.3, 5.RL.9", focus:"Comparing two texts, multiple accounts, structure analysis.", skills:["comparing texts","Venn diagram thinking","comparing characters","synthesizing"], passage:true },
+      "SBAC Simulation":         { codes:"All 5th grade CCSS ELA", focus:"Smarter Balanced style reading assessment: one grade-level passage with selected response, constructed response, and a written response requiring text evidence.", skills:["cite text evidence","main idea and theme","author's purpose","vocabulary in context","select all that apply","written response with evidence"], passage:true },
       "Visual & Graphic Sources": { codes:"5.RI.7", focus:"Interpreting information from charts, graphs, diagrams, timelines, and visual sources.", skills:["reading charts","interpreting graphs","reading timelines","diagrams","visual data"], passage:true },
     },
     writing: {
@@ -102,6 +103,7 @@ const STANDARDS = {
       "Author's Purpose":             { codes:"4.RI.6, 4.RI.8, 4.RL.6", focus:"Author's purpose, evaluating evidence/reasoning, firsthand vs secondhand accounts.", skills:["persuade/inform/entertain","author's evidence","fact vs opinion","author's claim","evaluating reasoning"], passage:true },
       "Text Evidence":                { codes:"4.RI.1, 4.RL.1, 4.W.9", focus:"Referring to details and examples when explaining text explicitly and drawing inferences.", skills:["locating evidence","using details and examples","evidence relevance","connecting to claim"], passage:true },
       "Firsthand vs Secondhand":      { codes:"4.RI.6", focus:"Comparing firsthand and secondhand accounts of the same event; differences in focus and information.", skills:["firsthand account","secondhand account","primary source","secondary source","comparing perspectives","narrator's role"], passage:true },
+      "SBAC Simulation":              { codes:"All 4th grade CCSS ELA", focus:"Smarter Balanced style reading assessment: one grade-level passage with selected response, constructed response, and a written response requiring text evidence.", skills:["cite text evidence","main idea","author's purpose","vocabulary in context","select all that apply","written response with evidence"], passage:true },
       "Visual Information":           { codes:"4.RI.7", focus:"Interpreting information presented visually or quantitatively (charts, graphs, diagrams, timelines, maps) and explaining how it contributes to understanding the text.", skills:["reading charts","interpreting graphs","reading timelines","diagrams","maps","connecting visuals to text"], passage:true },
       "Compare & Contrast":           { codes:"4.RI.9, 4.RL.9", focus:"Integrating information from two texts, comparing themes and topics across cultures.", skills:["comparing texts","Venn diagram thinking","comparing themes","cultural comparisons","synthesizing"], passage:true },
     },
@@ -147,6 +149,7 @@ const STANDARDS = {
       "Shapes & Geometry":         { codes:"3.G.A.1–2", focus:"Classifying shapes by their attributes, understanding categories of quadrilaterals, and partitioning shapes into equal areas expressed as unit fractions.", skills:["shape attributes","categories of quadrilaterals","rhombuses and rectangles","partitioning shapes","equal areas as unit fractions"] },
       "Word Problems":             { codes:"3.OA.A.3, 3.OA.D.8, 3.NBT.A.2, 3.MD.A.1–2", focus:"One- and two-step real-world problems using the four operations, including measurement and data contexts.", skills:["one-step word problems","two-step word problems","operation selection","letter for the unknown","measurement contexts","checking reasonableness"] },
       "Mixed Review":              { codes:"3.OA, 3.NBT, 3.NF, 3.MD, 3.G", focus:"Comprehensive review across all 3rd grade math domains.", skills:["multiplication/division","fractions","area and perimeter","place value","measurement and data","geometry"] },
+      "SBAC Simulation":           { codes:"All 3rd grade CCSS math", focus:"Smarter Balanced style mixed-domain assessment for students taking state testing for the first time. Clear directions, one task per item, mixed item formats.", skills:["mixed domains","selected response","constructed response","select all that apply","multi-step reasoning","explain your reasoning"] },
     },
     ela: {
       "Reading Comprehension":   { codes:"3.RL.1–3, 3.RI.1–3", focus:"Asking and answering questions with explicit text evidence, determining main idea and key details, and describing characters and the relationship between events.", skills:["ask and answer questions","cite text evidence","main idea and key details","character traits/motivations","cause and effect","sequence of events"], passage:true },
@@ -155,6 +158,7 @@ const STANDARDS = {
       "Cause, Effect & Sequence": { codes:"3.RI.3, 3.RI.8", focus:"Describing the relationship between historical events, scientific ideas, or steps in a procedure using language of time, sequence, and cause and effect.", skills:["cause and effect","sequence of steps","time-order language","connecting events","first/second/third structure","logical connections"], passage:true },
       "Text Features & Illustrations": { codes:"3.RI.5, 3.RI.7, 3.RL.7", focus:"Using text features and search tools to locate information, and using illustrations, maps, and photographs to demonstrate understanding of a text.", skills:["headings and bold words","glossary and index","maps and photographs","illustrations","locating information","where/when/why/how"], passage:true },
       "Vocabulary Practice":     { codes:"3.L.4–6, 3.RL.4, 3.RI.4", focus:"Determining word meaning using context, distinguishing literal from nonliteral language, prefixes and root words, and academic vocabulary.", skills:["context clues","literal vs nonliteral language","prefixes and suffixes","root words","real-life word connections","academic vocabulary"], passage:true },
+      "SBAC Simulation":         { codes:"All 3rd grade CCSS ELA", focus:"Smarter Balanced style reading assessment for students taking state testing for the first time: one grade-level passage, clear directions, mixed item formats.", skills:["ask and answer questions","cite text evidence","main idea and key details","vocabulary in context","select all that apply","written response with evidence"], passage:true },
       "Grammar & Conventions":   { codes:"3.L.1a–i, 3.L.2a–e", focus:"Parts of speech and their function, regular/irregular plural nouns and verbs, simple verb tenses, subject-verb and pronoun-antecedent agreement, comparatives, conjunctions, and sentence types. (CA also adds 3.L.1.j cursive and 3.L.1.k reciprocal pronouns.)", skills:["nouns/verbs/adjectives/adverbs","regular and irregular plural nouns","simple verb tenses","subject-verb agreement","pronoun-antecedent agreement","comparative/superlative","coordinating/subordinating conjunctions","simple/compound/complex sentences"] },
     },
     writing: {
@@ -306,9 +310,18 @@ function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic)
   const purposePlan = {
     practice:   { warm:3, mc:4, apply:2, explain:1, guide:"Lesson practice used right after instruction. Include a worked example or hint box immediately after the directions." },
     homework:   { warm:2, mc:4, apply:2, explain:1, guide:"Homework completable independently in 15-20 minutes. No new concepts." },
-    review:     { warm:2, mc:5, apply:2, explain:2, guide:"SBAC/test review. Mirror SBAC formats. Make at least ONE multiple choice question a select-ALL-that-apply with 5 choices and mark it clearly in the question text. Require explain-your-thinking responses." },
+    review:     { warm:2, mc:5, apply:2, explain:2, dok:true, guide:"SBAC/test review. Mirror Smarter Balanced item formats so students practice the FORM of the test, not just the content. Make at least ONE multiple choice question a select-ALL-that-apply with 5 choices, labeled A. through E., with the select-all instruction inside the question text." },
     finisher:   { warm:1, mc:3, apply:2, explain:1, guide:"Early finisher enrichment. Rich, puzzle-like, self-contained challenges." },
-    assessment: { warm:1, mc:3, apply:1, explain:1, guide:"Quick assessment of one focused skill. Keep it tight. End the worksheet with a student self-assessment line: How sure am I?  [ ] Very sure   [ ] Mostly sure   [ ] I need help" },
+    assessment: { warm:1, mc:4, apply:2, explain:1, assess:true, dok:true, guide:"A real graded assessment, not a practice page. Every item must be independently answerable: no hints, no worked examples, no word banks, and no question that gives away the answer to another question." },
+  };
+  const isAssessment = !!(purposePlan[purpose] || {}).assess;
+
+  // Grade-specific assessment context. CAASPP (Smarter Balanced) tests ELA and
+  // math in grades 3-5; CAST (science) is grade 5 only, not 3 or 4.
+  const assessContext = {
+    3: "This is 3rd grade, the FIRST year students take state testing. They have never seen these item formats before. Directions must be extremely explicit, one task per item, no compound instructions. Keep reading load low so the test measures the math or skill, not reading stamina.",
+    4: "This is 4th grade. Students have one year of state testing experience. Items may combine two steps, but each item must still assess one clear skill.",
+    5: "This is 5th grade. Students are experienced test takers and also take the CAST science test this year. Items may require multi-step reasoning and precise academic vocabulary.",
   };
   const pp = purposePlan[purpose] || purposePlan.practice;
   const mcCount = Math.max(3, pp.mc - gs.mcCut);
@@ -415,6 +428,11 @@ function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic)
   const extendBody = extendPlans[diffKey] || extendPlans.math;
   const skillsBind = `- Every scaffold and challenge must target the exact skills of this worksheet: ${std.skills.join(", ")}.`;
 
+  // On an assessment, support scaffolds cannot include worked examples or word
+  // banks for the skill being measured; that invalidates the score.
+  const assessSupportNote = isAssessment ? "\n- ASSESSMENT ACCOMMODATION MODE: this is a graded test. Do NOT include a worked example, word bank, or hint that reveals how to do the skill being measured. Allowed supports are only: fewer items, simpler numbers within the grade, more answer space, one task per line, and plain direction wording." : "";
+  const assessExtendNote = isAssessment ? "\n- ASSESSMENT MODE: keep every item independently scorable and keep the stated point values. Depth comes from harder reasoning, not from extra unscored activities." : "";
+
   const diffStructure = {
     on: "",
     support: `
@@ -422,12 +440,12 @@ DIFFERENTIATION REQUIREMENTS (WITH SUPPORT / BELOW GRADE LEVEL) - these are MAND
 ${supportBody}
 - Reduce the total number of questions slightly so the page does not feel overwhelming.
 ${skillsBind}
-- ${gg.support}`,
+- ${gg.support}${assessSupportNote}`,
     extend: `
 DIFFERENTIATION REQUIREMENTS (EXTENSION / ABOVE GRADE LEVEL) - these are MANDATORY and override the default structure where they conflict:
 ${extendBody}
 ${skillsBind}
-- ${gg.extend}`,
+- ${gg.extend}${assessExtendNote}`,
   };
 
   const subjectTopics = TOPICS[grade]?.[subjectId] || TOPICS[5].ela;
@@ -437,7 +455,11 @@ ${skillsBind}
   const line = "_______________________________________________";
   const hasPassage = !!std.passage;
   let n = 0;
+  let pts = 0;
   const next = () => ++n;
+  // Point weighting mirrors Smarter Balanced: selected response 1, constructed
+  // response 2, extended written response 3.
+  const tag = (v) => { if (!isAssessment) return ""; pts += v; return "  (" + v + " point" + (v > 1 ? "s" : "") + ")"; };
   const sec = [];
   const key = [];
 
@@ -447,7 +469,7 @@ ${skillsBind}
     let t = `[SECTION: ${heading}]\nTYPE: short_answer\n`;
     for (let i = 0; i < count; i++) {
       const q = next(); nums.push(q);
-      t += `${q}. (${hint})${extra ? `  ${extra}` : ""}\n${line}\n${line}\n\n`;
+      t += `${q}. (${hint})${tag(2)}${extra ? `  ${extra}` : ""}\n${line}\n${line}\n\n`;
     }
     sec.push(t.trimEnd());
     key.push(`${heading}:\n` + nums.map(q => `${q}. (answer with brief explanation)`).join("\n"));
@@ -459,7 +481,7 @@ ${skillsBind}
     let t = `[SECTION: ${heading}]\nTYPE: multiple_choice\n`;
     for (let i = 0; i < count; i++) {
       const q = next(); nums.push(q);
-      t += `${q}. (complete question with real content)\n   A. (option)\n   B. (option)\n   C. (option)\n   D. (option)\n\n`;
+      t += `${q}. (complete question with real content)${tag(1)}\n   A. (option)\n   B. (option)\n   C. (option)\n   D. (option)\n\n`;
     }
     sec.push(t.trimEnd());
     key.push(`${heading}:\n` + nums.map(q => `${q}. (letter) - (why correct; what error each wrong answer represents)`).join("\n"));
@@ -471,7 +493,7 @@ ${skillsBind}
     let t = `[SECTION: ${heading}]\nTYPE: word_problem\n`;
     for (let i = 0; i < count; i++) {
       const q = next(); nums.push(q);
-      t += `${q}. (${hint})\n\nShow your work:\n[WORK BOX]\n\nAnswer: _______________\n\n`;
+      t += `${q}. (${hint})${tag(2)}\n\nShow your work:\n[WORK BOX]\n\nAnswer: _______________\n\n`;
     }
     sec.push(t.trimEnd());
     key.push(`${heading}:\n` + nums.map(q => `${q}. (full solution with steps)`).join("\n"));
@@ -483,7 +505,7 @@ ${skillsBind}
     let t = `[SECTION: ${heading}]\nTYPE: explain\n`;
     for (let i = 0; i < count; i++) {
       const q = next(); nums.push(q);
-      t += `${q}. (${hint})\n\n${line}\n${line}\n${line}\n${line}\n\n`;
+      t += `${q}. (${hint})${tag(3)}\n\n${line}\n${line}\n${line}\n${line}\n\n`;
     }
     sec.push(t.trimEnd());
     key.push(`${heading}:\n` + nums.map(q => `${q}. (example of a strong student response)`).join("\n"));
@@ -525,18 +547,47 @@ ${skillsBind}
       ela:     { heading:"Apply the Rule",         type:"short", hint:"question where students apply the language rule: fix a sentence, choose the correct form, or write their own example" },
     };
     const ap = applyPlans[subjectId] || applyPlans.math;
-    shortAnswerBlock("Warm-Up", pp.warm, "quick warm-up question that activates prior knowledge of this skill");
-    mcBlock("Multiple Choice", mcCount);
-    if (ap.type === "work") workBlock(ap.heading, pp.apply, ap.hint);
-    else shortAnswerBlock(ap.heading, pp.apply, ap.hint);
-    explainBlock("Explain Your Thinking", pp.explain, "question requiring explanation of a strategy, method, or reasoning");
+    if (!isAssessment) shortAnswerBlock("Warm-Up", pp.warm, "quick warm-up question that activates prior knowledge of this skill");
+    mcBlock(isAssessment ? "Part 1: Selected Response" : "Multiple Choice", mcCount);
+    const applyHead = isAssessment ? "Part 2: Constructed Response" : ap.heading;
+    if (ap.type === "work") workBlock(applyHead, pp.apply, ap.hint);
+    else shortAnswerBlock(applyHead, pp.apply, ap.hint);
+    explainBlock(isAssessment ? "Part 3: Explain Your Reasoning" : "Explain Your Thinking", pp.explain, "question requiring explanation of a strategy, method, or reasoning");
   }
 
   const totalQuestions = n;
+  const totalPoints = pts;
+
+  // Assessment and cognitive-depth rules, modeled on Smarter Balanced item design.
+  const dokRules = (pp.dok || isAssessment) ? `
+COGNITIVE DEPTH (required): spread the items across depth of knowledge levels the way Smarter Balanced does. Do NOT write every item at recall level.
+- About one third at DOK 1: recall and routine procedure.
+- About one third at DOK 2: apply a skill in a described situation, interpret data, or use more than one step.
+- The rest at DOK 3: reason, justify, compare strategies, or explain why something works.
+- Every multiple choice distractor must be an answer a real ${gradeLabel} grader would actually pick because of a specific misconception, never filler.` : "";
+
+  const assessmentRules = isAssessment ? `
+ASSESSMENT INTEGRITY (required, this is a graded test):
+- ${assessContext[grade] || assessContext[4]}
+- Items must be INDEPENDENT. No item may reveal the answer to another item.
+- No hints, no word banks, no worked examples, no sentence starters, and no reminder boxes anywhere on the student pages.
+- Directions state only what to do, never how to do it.
+- Every item must measure the listed standards directly. Do not test reading ability in a math assessment or test unrelated background knowledge.
+- Point values are already written into each item. Do not change them.
+- The final [SECTION: Scoring] block must contain only the total score line exactly as specified.
+
+ANSWER KEY REQUIREMENTS FOR THIS ASSESSMENT:
+- For every constructed and extended response item, give a scoring guide stating what earns full points and what earns partial credit.
+- End the answer key with a proficiency guide using the four California reporting levels, converted to this test\u0027s ${totalPoints} points, in this exact form:
+  Standard Exceeded: (point range)
+  Standard Met: (point range)
+  Standard Nearly Met: (point range)
+  Standard Not Met: (point range)` : "";
+
   const sectionText = sec.join("\n\n");
   const keyText = key.join("\n\n");
 
-  return `You are creating a complete ${gradeLabel} grade California standards-aligned worksheet. Output ONLY structured plain text using exactly the section markers below. Follow the structure EXACTLY - do not move, rename, or skip any block. This worksheet has exactly ${totalQuestions} numbered questions plus one bonus.
+  return `You are creating a complete ${gradeLabel} grade California standards-aligned worksheet. Output ONLY structured plain text using exactly the section markers below. Follow the structure EXACTLY - do not move, rename, or skip any block. ${isAssessment ? `This is a GRADED ASSESSMENT with exactly ${totalQuestions} scored items worth ${totalPoints} total points.` : `This worksheet has exactly ${totalQuestions} numbered questions plus one bonus.`}
 
 DETAILS:
 - Grade: ${gradeLabel} Grade
@@ -565,13 +616,16 @@ ${hasPassage ? `[PASSAGE]
 
 ` : ""}${sectionText}
 
-[BONUS]
+${isAssessment ? `[SECTION: Scoring]
+TYPE: short_answer
+(Do not write questions here. Write exactly this line and nothing else: Total Score: ______ out of ${totalPoints} points)
+` : `[BONUS]
 (${bonusHint})
 
 ${line}
 ${line}
 ${line}
-
+`}
 [ANSWER KEY]
 ${keyText}
 
@@ -580,6 +634,8 @@ Bonus: (full solution or sample response)
 [TEACHER NOTES]
 Standards: ${std.codes}
 Tips: (2-3 sentences on differentiation, misconceptions, suggested use)
+
+${dokRules}${assessmentRules}
 
 RULES:
 - No placeholder text ever. Real content, numbers, and scenarios only.
@@ -597,10 +653,11 @@ RULES:
 
 function inferType(heading) {
   const h = heading.toLowerCase();
-  if (h.includes("multiple choice") || h.includes("multiple-choice")) return "multiple_choice";
+  // Engine v2 section names first, so the fallback matches what we actually ask for.
+  if (h.includes("multiple choice") || h.includes("multiple-choice") || h.includes("check understanding")) return "multiple_choice";
+  if (h.includes("show your work") || h.includes("investigate") || h.includes("plan your writing") || h.includes("word problem")) return "word_problem";
+  if (h.includes("written response") || h.includes("write your draft") || h.includes("explain") || h.includes("thinking")) return "explain";
   if (h.includes("warm")) return "short_answer";
-  if (h.includes("word problem") || h.includes("show your work") || h.includes("math")) return "word_problem";
-  if (h.includes("explain") || h.includes("thinking") || h.includes("writing")) return "explain";
   if (h.includes("true") || h.includes("false")) return "true_false";
   if (h.includes("fill") || h.includes("blank")) return "fill_blank";
   return "short_answer";
@@ -680,6 +737,28 @@ function parseWorksheet(text) {
     answerKey: get("ANSWER KEY"),
     teacherNotes: get("TEACHER NOTES"),
   };
+}
+
+// Flags the failure modes we have actually seen: cut-off generations, empty
+// question stems, and multiple choice questions missing their answer choices.
+function worksheetWarnings(parsed, rawText) {
+  const w = [];
+  if (!parsed) return w;
+  if (!parsed.title) w.push("The title is missing.");
+  if (!parsed.sections.length) w.push("No question sections were found.");
+  if (!parsed.answerKey) w.push("The answer key is missing, which usually means the generation was cut off.");
+  else if (!/\[TEACHER NOTES\]/i.test(rawText || "")) w.push("Teacher notes are missing.");
+  parsed.sections.forEach((sec) => {
+    const lines = sec.content.split("\n").map((l) => l.trim());
+    const qs = lines.filter((l) => /^\d+\.\s*/.test(l));
+    const blank = qs.filter((l) => l.replace(/^\d+\.\s*/, "").length < 8).length;
+    if (blank) w.push(blank + " question" + (blank > 1 ? "s" : "") + " in \"" + sec.heading + "\" " + (blank > 1 ? "have" : "has") + " no text.");
+    if (sec.type === "multiple_choice" && qs.length) {
+      const choices = lines.filter((l) => /^[A-F]\./.test(l)).length;
+      if (choices < qs.length * 2) w.push("Some questions in \"" + sec.heading + "\" are missing answer choices.");
+    }
+  });
+  return w;
 }
 
 function renderSectionHTML(sec) {
@@ -830,7 +909,7 @@ function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
                 <div dangerouslySetInnerHTML={{__html:renderSectionHTML(sec)}}/>
               </div>
             ))}
-            {parsed.bonus&&(<div style={{background:`${hc}0d`,border:`1.5px solid ${hc}30`}} className="rounded-xl p-5"><p style={{color:hc}} className="text-xs font-extrabold uppercase tracking-widest mb-3">⭐ Bonus Challenge</p><p className="text-sm font-medium text-slate-800 mb-3">{parsed.bonus.split("\n")[0]}</p>{[...Array(4)].map((_,i)=><div key={i} className="border-b border-slate-300 h-7 mt-1.5 w-full"/>)}</div>)}
+            {parsed.bonus&&(<div style={{background:`${hc}0d`,border:`1.5px solid ${hc}30`}} className="rounded-xl p-5"><p style={{color:hc}} className="text-xs font-extrabold uppercase tracking-widest mb-3">⭐ Bonus Challenge</p><div className="mb-3">{parsed.bonus.split("\n").map(l=>l.trim()).filter(l=>l&&!l.startsWith("___")).map((l,i)=>(<p key={i} className="text-sm font-medium text-slate-800" style={{whiteSpace:"pre-wrap"}}>{l}</p>))}</div>{[...Array(4)].map((_,i)=><div key={i} className="border-b border-slate-300 h-7 mt-1.5 w-full"/>)}</div>)}
           </div>
           <div className="px-7 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
             <span className="text-xs text-slate-300">© REX Resource Studio · {gradeLabel} Grade · For classroom use</span>
@@ -1211,7 +1290,7 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
           {parsed.bonus && (
             <div className="tpt-bonus">
               <p className="tpt-bonus-label">★ Bonus Challenge</p>
-              <p className="tpt-qtext">{parsed.bonus.split("\n")[0]}</p>
+              {parsed.bonus.split("\n").map(l=>l.trim()).filter(l=>l&&!l.startsWith("___")).map((l,i)=>(<p key={i} className={i===0?"tpt-qtext":"tpt-inline"}>{l}</p>))}
               <TptLines n={3} />
             </div>
           )}
@@ -1284,6 +1363,7 @@ export default function RexStudio() {
   };
 
   const gradeLabel = gradeOrdinal(grade);
+  const warnings = parsed ? worksheetWarnings(parsed, rawText) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50">
@@ -1387,6 +1467,16 @@ export default function RexStudio() {
           {error&&(<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2"><AlertCircle size={15} className="mt-0.5 flex-shrink-0"/><div><p>{error}</p><button onClick={generate} className="mt-2 flex items-center gap-1.5 text-xs font-bold bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-all"><RefreshCw size={11}/> Try Again</button></div></div>)}
         </div>
 
+        {rawText&&parsed&&warnings.length>0&&(
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm flex items-start gap-2 rex-no-print">
+            <AlertCircle size={15} className="mt-0.5 flex-shrink-0"/>
+            <div>
+              <p className="font-bold">This worksheet looks incomplete</p>
+              <ul className="mt-1 space-y-0.5 text-xs">{warnings.map((w,i)=>(<li key={i}>· {w}</li>))}</ul>
+              <button onClick={generate} className="mt-2 flex items-center gap-1.5 text-xs font-bold bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-all"><RefreshCw size={11}/> Generate Again</button>
+            </div>
+          </div>
+        )}
         {rawText&&parsed&&outputMode==="print"&&<PrintableView parsed={parsed} subject={subject} grade={grade} showKey={showKey} onToggleKey={()=>setShowKey(!showKey)}/>}
         {rawText&&parsed&&outputMode==="tpt"&&<TPTPrintView parsed={parsed} subject={subject} grade={grade} showKey={showKey} onToggleKey={()=>setShowKey(!showKey)}/>}
         {rawText&&outputMode==="raw"&&<RawView text={rawText} subject={subject}/>}
