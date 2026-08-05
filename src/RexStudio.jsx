@@ -680,6 +680,13 @@ Tips: (2-3 sentences on differentiation, misconceptions, suggested use)
 
 ${dokRules}${castRules}${assessmentRules}
 
+ANSWER ACCURACY (required):
+- Work every problem yourself BEFORE writing the answer key, and write the key from that work.
+- Recheck every calculation. A wrong answer key is worse than a hard worksheet.
+- The key must answer EVERY numbered question, using the same numbers, in the same order, and nothing that is not on the worksheet.
+- For multiple choice, the letter in the key must match the letter of the correct option as written in the question.
+- Make sure exactly one option is defensibly correct for single-answer multiple choice.
+
 RULES:
 - No placeholder text ever. Real content, numbers, and scenarios only.
 - Every question must be COMPLETE: full question text, every answer choice, and any data, pattern, table, or student work written out in full. Never reference a table, chart, picture, or work sample that is not fully written into the text.
@@ -784,6 +791,65 @@ function parseWorksheet(text) {
 
 // Flags the failure modes we have actually seen: cut-off generations, empty
 // question stems, and multiple choice questions missing their answer choices.
+// Cross-checks the answer key against the actual questions. This cannot judge
+// whether an answer is conceptually right, but it reliably catches keys that
+// skip items, answer items that do not exist, or name a choice that was never
+// offered, which are the errors a teacher notices first.
+function answerKeyWarnings(parsed) {
+  const w = [];
+  if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
+  const key = parsed.answerKey;
+
+  // Map every question number to its section and available choice letters.
+  const questions = new Map();
+  parsed.sections.forEach((sec) => {
+    if (/scoring/i.test(sec.heading)) return;
+    const lines = sec.content.split("\n").map((l) => l.trim());
+    let current = null;
+    lines.forEach((l) => {
+      const q = l.match(/^(\d+)\.\s/);
+      if (q) { current = q[1]; questions.set(current, { heading: sec.heading, type: sec.type, choices: [] }); return; }
+      const c = l.match(/^([A-F])\./);
+      if (c && current && questions.has(current)) questions.get(current).choices.push(c[1]);
+    });
+  });
+  if (!questions.size) return w;
+
+  // Which question numbers does the key actually address?
+  const answered = new Set();
+  key.split("\n").forEach((l) => {
+    const m = l.trim().match(/^(\d+)[.):]\s*(.*)$/);
+    if (m) answered.add(m[1]);
+  });
+
+  const missing = [...questions.keys()].filter((n) => !answered.has(n));
+  if (missing.length) w.push("The answer key has no answer for question" + (missing.length > 1 ? "s " : " ") + missing.join(", ") + ".");
+  const extra = [...answered].filter((n) => !questions.has(n));
+  if (extra.length) w.push("The answer key answers question" + (extra.length > 1 ? "s " : " ") + extra.join(", ") + ", which " + (extra.length > 1 ? "are" : "is") + " not on the worksheet.");
+
+  // For multiple choice, the named letter must be a choice that exists.
+  const badLetters = [];
+  key.split("\n").forEach((l) => {
+    const m = l.trim().match(/^(\d+)[.):]\s*\(?([A-F])\b/);
+    if (!m) return;
+    const q = questions.get(m[1]);
+    if (q && q.choices.length && !q.choices.includes(m[2])) badLetters.push(m[1] + " (says " + m[2] + ")");
+  });
+  if (badLetters.length) w.push("The answer key names a choice that was not offered on question " + badLetters.join(", ") + ".");
+
+  // Assessment point math: the declared total must match the items.
+  const scoring = parsed.sections.find((s) => /scoring/i.test(s.heading));
+  if (scoring) {
+    const declared = (scoring.content.match(/out of\s+(\d+)/i) || [])[1];
+    let summed = 0;
+    parsed.sections.forEach((sec) => {
+      (sec.content.match(/\((\d+)\s*points?\)/gi) || []).forEach((x) => { summed += parseInt(x.match(/\d+/)[0]); });
+    });
+    if (declared && summed && parseInt(declared) !== summed) w.push("Point total does not add up: the scoring line says " + declared + " but the items total " + summed + ".");
+  }
+  return w;
+}
+
 function worksheetWarnings(parsed, rawText) {
   const w = [];
   if (!parsed) return w;
@@ -801,7 +867,7 @@ function worksheetWarnings(parsed, rawText) {
       if (choices < qs.length * 2) w.push("Some questions in \"" + sec.heading + "\" are missing answer choices.");
     }
   });
-  return w;
+  return w.concat(answerKeyWarnings(parsed));
 }
 
 function renderSectionHTML(sec) {
