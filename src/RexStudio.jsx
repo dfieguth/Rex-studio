@@ -782,11 +782,37 @@ function parseWorksheet(text) {
     }
   }
 
+  // Deterministic cleanup. The model is instructed to put word banks, hint
+  // boxes, and rules boxes only in [SUPPORT BOX], but instructions are a request,
+  // not a guarantee: it often writes them into the directions as well, producing
+  // the same content twice on the page. Anything that looks like a box header is
+  // cut out of the directions here, in code, and recovered into supportBox if the
+  // marker was skipped entirely. Real directions are 1-2 sentences.
+  const BOX_HEADER = /(?:^|\n|\s)[^\S\n]*(?:[\u2014\u2013\-_=]{3,}\s*)?(?:\u{1F9E0}|\u{1F4E6}|\u2b50|\u2605)?\s*\b(HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b/iu;
+  let directions = get("DIRECTIONS");
+  let supportBox = get("SUPPORT BOX");
+  const strayBox = directions.match(BOX_HEADER);
+  if (strayBox) {
+    const cut = strayBox.index;
+    const stray = directions.slice(cut).trim();
+    directions = directions.slice(0, cut).trim();
+    // Only recover the stray text if the dedicated block is missing or is a
+    // near-duplicate of it, so genuine box content is never lost.
+    if (!supportBox || supportBox.length < stray.length) supportBox = stray;
+  }
+  // Strip leading rule lines the model draws around boxes, which render as junk.
+  supportBox = supportBox
+    .split("\n")
+    .filter((l) => !/^[\s\u2014\u2013\-_=\u2500-\u257F]*$/.test(l) || !l.trim())
+    .join("\n")
+    .replace(/^\s*[\u2014\u2013\-_=]{3,}\s*/, "")
+    .trim();
+
   return {
     title: get("TITLE"),
     subtitle: get("SUBTITLE"),
-    directions: get("DIRECTIONS"),
-    supportBox: get("SUPPORT BOX"),
+    directions,
+    supportBox,
     passage,
     sections,
     bonus: get("BONUS"),
@@ -987,7 +1013,7 @@ async function saveWorksheetPdf(parsed, subject, grade) {
     // scrollY resets html2canvas's capture offset to the top of the element
     // regardless of the page's current scroll position, a known html2canvas
     // gotcha that otherwise produces a blank gap and misaligned pagination.
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false, scrollY: 0, scrollX: 0, windowWidth: el.scrollWidth },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false, scrollY: 0, scrollX: 0 },
     jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
     pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block"] },
   }).from(el).save();
