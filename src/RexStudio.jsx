@@ -1020,10 +1020,6 @@ function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
             ))}
             {parsed.bonus&&(<div style={{background:`${hc}0d`,border:`1.5px solid ${hc}30`}} className="rounded-xl p-5"><p style={{color:hc}} className="text-xs font-extrabold uppercase tracking-widest mb-3">⭐ Bonus Challenge</p><div className="mb-3">{parsed.bonus.split("\n").map(l=>l.trim()).filter(l=>l&&!l.startsWith("___")).map((l,i)=>(<p key={i} className="text-sm font-medium text-slate-800" style={{whiteSpace:"pre-wrap"}}>{l}</p>))}</div>{[...Array(4)].map((_,i)=><div key={i} className="border-b border-slate-300 h-7 mt-1.5 w-full"/>)}</div>)}
           </div>
-          <div className="px-7 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-            <span className="text-xs text-slate-300">© REX Resource Studio · {gradeLabel} Grade · For classroom use</span>
-            <div className="flex gap-1">{[...Array(4)].map((_,i)=><div key={i} style={{background:`${hc}50`}} className="w-1 h-1 rounded-full"/>)}</div>
-          </div>
         </div>
         {showKey&&parsed.answerKey&&(
           <div className="mt-4 bg-slate-800 rounded-2xl p-5 rex-answer-key" style={{pageBreakBefore:"always"}}>
@@ -1404,7 +1400,7 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
             </div>
           )}
           <footer className="tpt-footer">
-            <span>© REX Resource Studio · {ord} Grade · For classroom use</span>
+            <span></span>
             <span className="tpt-dots">● ● ● ●</span>
           </footer>
         </div>
@@ -1426,7 +1422,7 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
               </div>
             )}
             <footer className="tpt-footer">
-              <span>© REX Resource Studio · Answer Key · Not for student distribution</span>
+              <span>Answer Key · Not for student distribution</span>
               <span className="tpt-dots">● ● ● ●</span>
             </footer>
           </div>
