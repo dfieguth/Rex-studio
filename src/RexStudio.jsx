@@ -1333,19 +1333,41 @@ Generate a worksheet template layout I can fill in with my content.`;
 // Polished TPT-style print template. Same props as PrintableView.
 
 function TptScallop({ color, grade }) {
+  // Built from positioned divs rather than inline SVG: html2canvas (used by
+  // Save as PDF) cannot reliably rasterize SVG, and drops <text> entirely, which
+  // is why this sticker was missing from exported PDFs. Percentages reproduce the
+  // original geometry: 12 petals on a radius-38 ring, a radius-40 center disc,
+  // and a dashed ring at radius 33, all within a 100-unit box.
   const petals = [];
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2;
-    petals.push(<circle key={i} cx={50 + Math.cos(a) * 38} cy={50 + Math.sin(a) * 38} r="13" fill={color} />);
+    const cx = 50 + Math.cos(a) * 38;
+    const cy = 50 + Math.sin(a) * 38;
+    petals.push(
+      <div
+        key={i}
+        style={{
+          position: "absolute",
+          width: "26%",
+          height: "26%",
+          left: `${cx - 13}%`,
+          top: `${cy - 13}%`,
+          borderRadius: "50%",
+          background: color,
+        }}
+      />
+    );
   }
   return (
-    <svg viewBox="0 0 100 100" style={{ width: 78, height: 78, flexShrink: 0 }} aria-hidden="true">
+    <div style={{ position: "relative", width: 78, height: 78, flexShrink: 0 }} aria-hidden="true">
       {petals}
-      <circle cx="50" cy="50" r="40" fill={color} />
-      <circle cx="50" cy="50" r="33" fill="none" stroke="#FFFFFF" strokeWidth="1.6" strokeDasharray="3 3" />
-      <text x="50" y="47" textAnchor="middle" fill="#FFFFFF" style={{ font: "800 22px 'Baloo 2', sans-serif" }}>{grade}</text>
-      <text x="50" y="64" textAnchor="middle" fill="#FFFFFF" style={{ font: "700 10.5px 'Baloo 2', sans-serif", letterSpacing: "1.5px" }}>GRADE</text>
-    </svg>
+      <div style={{ position: "absolute", left: "10%", top: "10%", width: "80%", height: "80%", borderRadius: "50%", background: color }} />
+      <div style={{ position: "absolute", left: "17%", top: "17%", width: "66%", height: "66%", borderRadius: "50%", border: "1.6px dashed #FFFFFF", boxSizing: "border-box" }} />
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#FFFFFF", lineHeight: 1 }}>
+        <span style={{ font: "800 17px 'Baloo 2', sans-serif" }}>{grade}</span>
+        <span style={{ font: "700 8px 'Baloo 2', sans-serif", letterSpacing: "1.2px", marginTop: 2 }}>GRADE</span>
+      </div>
+    </div>
   );
 }
 
