@@ -754,6 +754,26 @@ function cleanAnswerKey(text) {
   return cleaned;
 }
 
+// Splits the answer key into logical blocks (one per numbered item or labeled
+// heading). Rendering these as separate elements lets a PDF page break land
+// BETWEEN blocks. As one tall <pre>, the rasterizer had no choice but to slice
+// straight through a line of text at an arbitrary pixel.
+function answerKeyBlocks(text) {
+  if (!text) return [];
+  const lines = text.split("\n");
+  const blocks = [];
+  let current = [];
+  const flush = () => { if (current.join("\n").trim()) blocks.push(current.join("\n")); current = []; };
+  for (const line of lines) {
+    const startsItem = /^\s*\d+[.)]\s/.test(line);
+    const startsHeading = /^[A-Z][^\n]{0,60}:\s*$/.test(line.trim()) || /^(Bonus|Proficiency Guide|Scoring Rubric|Scoring Guide)\b/i.test(line.trim());
+    if ((startsItem || startsHeading) && current.length) flush();
+    current.push(line);
+  }
+  flush();
+  return blocks;
+}
+
 function parseWorksheet(text) {
   const get = (tag) => {
     const re = new RegExp(`\\[${tag}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n\\[(?:TITLE|SUBTITLE|DIRECTIONS|SUPPORT BOX|PASSAGE|SECTION|BONUS|ANSWER|TEACHER)|$)`, "i");
@@ -1072,7 +1092,7 @@ async function saveWorksheetPdf(parsed, subject, grade) {
     // gotcha that otherwise produces a blank gap and misaligned pagination.
     html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false, scrollY: 0, scrollX: 0 },
     jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block", ".tpt-directions", ".tpt-supportbox", ".tpt-passage", ".tpt-bonus", ".tpt-firstblock"] },
+    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block", ".tpt-directions", ".tpt-supportbox", ".tpt-passage", ".tpt-bonus", ".tpt-firstblock", ".tpt-keyblock", ".rex-keyblock", ".tpt-notes"] },
     }).from(el).save();
   } finally {
     el.classList.remove("rex-pdf-export");
@@ -1130,7 +1150,7 @@ function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
         {showKey&&parsed.answerKey&&(
           <div className="mt-4 bg-slate-800 rounded-2xl p-5 rex-answer-key" style={{pageBreakBefore:"always"}}>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Answer Key</p>
-            <pre className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed">{parsed.answerKey}</pre>
+            {answerKeyBlocks(parsed.answerKey).map((b,i)=>(<pre key={i} className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed rex-keyblock" style={{margin:"0 0 8px"}}>{b}</pre>))}
             {parsed.teacherNotes&&(<div className="mt-4 bg-slate-700 rounded-xl px-4 py-3"><p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">Teacher Notes</p><pre className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed">{parsed.teacherNotes}</pre></div>)}
           </div>
         )}
@@ -1425,50 +1445,51 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
         /* Baloo 2 and Atkinson Hyperlegible are preloaded once at the app level
            (see RexStudio's mount effect), not here, so the fetch has already
            finished long before this view can even be reached. */
-        .tpt-scope { --ink:#2B2A33; --pencil:#8A867C; --rule:#D8D5CE; color:var(--ink); font-family:'Atkinson Hyperlegible',sans-serif; }
+        .tpt-scope { --ink:#2B2A33; --pencil:#8A867C; --rule:#D8D5CE; color:#2B2A33; font-family:'Atkinson Hyperlegible',sans-serif; }
         .tpt-page { background:#fff; margin:0 auto 24px; padding:0.55in 0.6in 0.4in; box-shadow:0 2px 14px rgba(43,42,51,.12); border-radius:6px; max-width:8.5in; }
-        .tpt-header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:3px solid var(--accent); padding-bottom:14px; }
-        .tpt-eyebrow { font:700 10px 'Baloo 2',sans-serif; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin:0 0 2px; }
-        .tpt-title { font:800 30px/1.05 'Baloo 2',sans-serif; margin:0 0 12px; color:var(--ink); }
-        .tpt-keysub { font-style:italic; font-size:14px; color:var(--pencil); margin:0; }
-        .tpt-meta { display:flex; align-items:flex-end; gap:8px; font:700 10px 'Baloo 2',sans-serif; text-transform:uppercase; letter-spacing:1px; color:var(--pencil); }
-        .tpt-meta div { border-bottom:1.5px solid var(--ink); height:16px; width:150px; }
+        .tpt-header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:3px solid ${hc}; padding-bottom:14px; }
+        .tpt-eyebrow { font:700 10px 'Baloo 2',sans-serif; letter-spacing:2px; text-transform:uppercase; color:${hc}; margin:0 0 2px; }
+        .tpt-title { font:800 30px/1.05 'Baloo 2',sans-serif; margin:0 0 12px; color:#2B2A33; }
+        .tpt-keysub { font-style:italic; font-size:14px; color:#8A867C; margin:0; }
+        .tpt-meta { display:flex; align-items:flex-end; gap:8px; font:700 10px 'Baloo 2',sans-serif; text-transform:uppercase; letter-spacing:1px; color:#8A867C; }
+        .tpt-meta div { border-bottom:1.5px solid #2B2A33; height:16px; width:150px; }
         .tpt-meta div.short { width:80px; } .tpt-meta div.shorter { width:50px; }
-        .tpt-directions { display:flex; margin:16px 0 0; border:1.5px solid var(--rule); border-radius:8px; overflow:hidden; }
-        .tpt-tab { background:var(--accent); color:#fff; font:700 11px 'Baloo 2',sans-serif; letter-spacing:1px; text-transform:uppercase; padding:10px 12px; display:flex; align-items:center; }
+        .tpt-directions { display:flex; margin:16px 0 0; border:1.5px solid #D8D5CE; border-radius:8px; overflow:hidden; }
+        .tpt-tab { background:${hc}; color:#fff; font:700 11px 'Baloo 2',sans-serif; letter-spacing:1px; text-transform:uppercase; padding:10px 12px; display:flex; align-items:center; }
         .tpt-directions p { margin:0; padding:9px 12px; font-size:13.5px; line-height:1.5; }
-        .tpt-passage { margin:16px 0 0; padding:14px 16px; border:1.5px solid var(--rule); border-left:5px solid var(--accent); border-radius:8px; background:${hc}0a; }
+        .tpt-passage { margin:16px 0 0; padding:14px 16px; border:1.5px solid #D8D5CE; border-left:5px solid ${hc}; border-radius:8px; background:${hc}0a; }
         .tpt-passage-title { font:800 14px 'Baloo 2',sans-serif; letter-spacing:1.5px; margin:0 0 6px; }
         .tpt-passage-body { margin:0 0 6px; font-size:13.5px; line-height:1.62; }
-        .tpt-supportbox { margin:16px 0 0; padding:12px 14px; border:1.5px solid var(--accent); border-radius:8px; background:${hc}0d; }
-        .tpt-supportbox-title { font:800 11px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; }
+        .tpt-supportbox { margin:16px 0 0; padding:12px 14px; border:1.5px solid ${hc}; border-radius:8px; background:${hc}0d; }
+        .tpt-supportbox-title { font:800 11px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:${hc}; margin:0 0 6px; }
         .tpt-supportbox-line { margin:0 0 4px; font-size:13px; line-height:1.55; }
         .tpt-section { margin-top:20px; }
         .tpt-firstblock { display:block; }
         .tpt-sechead { display:flex; align-items:center; gap:10px; margin:0 0 12px; }
-        .tpt-sechead span { font:700 13px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); white-space:nowrap; }
-        .tpt-sechead::after { content:""; flex:1; border-top:2px dotted var(--rule); }
+        .tpt-sechead span { font:700 13px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:${hc}; white-space:nowrap; }
+        .tpt-sechead::after { content:""; flex:1; border-top:2px dotted #D8D5CE; }
         .tpt-q { display:flex; gap:10px; margin-bottom:15px; break-inside:avoid; }
-        .tpt-qnum { font:800 14px 'Baloo 2',sans-serif; color:#fff; background:var(--accent); width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+        .tpt-qnum { font:800 14px 'Baloo 2',sans-serif; color:#fff; background:${hc}; width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
         .tpt-qbody { flex:1; }
         .tpt-qtext { margin:0 0 8px; font-size:13.5px; line-height:1.55; font-weight:700; }
         .tpt-inline { margin:4px 0; font-size:13px; line-height:1.5; white-space:pre-wrap; }
         .tpt-scoreline { margin:6px 0; font:700 15px 'Baloo 2',sans-serif; letter-spacing:0.5px; }
         .tpt-choice { display:flex; align-items:center; gap:9px; margin-bottom:6px; font-size:13px; }
-        .tpt-bubble { width:19px; height:19px; border:1.8px solid var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 10px 'Baloo 2',sans-serif; flex-shrink:0; }
-        .tpt-line { border-bottom:1.5px solid var(--rule); height:26px; }
-        .tpt-workbox { border:2px dashed var(--accent); border-radius:10px; min-height:95px; padding:8px 10px; margin:6px 0; }
-        .tpt-worklabel { font:700 9.5px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--pencil); }
-        .tpt-answerline { display:flex; align-items:flex-end; gap:8px; margin-top:8px; font:700 10px 'Baloo 2',sans-serif; text-transform:uppercase; letter-spacing:1px; color:var(--pencil); }
-        .tpt-answerline div { border-bottom:1.5px solid var(--ink); height:16px; width:180px; }
-        .tpt-bonus { margin-top:22px; border:2px solid var(--accent); border-radius:12px; padding:12px 14px; background:${hc}0f; }
-        .tpt-bonus-label { font:800 13px 'Baloo 2',sans-serif; letter-spacing:1px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; }
-        .tpt-footer { display:flex; justify-content:space-between; margin-top:26px; padding-top:8px; border-top:1.5px solid var(--rule); font-size:9.5px; color:var(--pencil); }
-        .tpt-dots { color:var(--accent); letter-spacing:3px; font-size:7px; }
+        .tpt-bubble { width:19px; height:19px; border:1.8px solid #2B2A33; border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 10px 'Baloo 2',sans-serif; flex-shrink:0; }
+        .tpt-line { border-bottom:1.5px solid #D8D5CE; height:26px; }
+        .tpt-workbox { border:2px dashed ${hc}; border-radius:10px; min-height:95px; padding:8px 10px; margin:6px 0; }
+        .tpt-worklabel { font:700 9.5px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:#8A867C; }
+        .tpt-answerline { display:flex; align-items:flex-end; gap:8px; margin-top:8px; font:700 10px 'Baloo 2',sans-serif; text-transform:uppercase; letter-spacing:1px; color:#8A867C; }
+        .tpt-answerline div { border-bottom:1.5px solid #2B2A33; height:16px; width:180px; }
+        .tpt-bonus { margin-top:22px; border:2px solid ${hc}; border-radius:12px; padding:12px 14px; background:${hc}0f; }
+        .tpt-bonus-label { font:800 13px 'Baloo 2',sans-serif; letter-spacing:1px; text-transform:uppercase; color:${hc}; margin:0 0 6px; }
+        .tpt-footer { display:flex; justify-content:space-between; margin-top:26px; padding-top:8px; border-top:1.5px solid #D8D5CE; font-size:9.5px; color:#8A867C; }
+        .tpt-dots { color:${hc}; letter-spacing:3px; font-size:7px; }
         .tpt-keypage { page-break-before:always; }
         .tpt-key { white-space:pre-wrap; font:400 12.5px/1.65 'Atkinson Hyperlegible',sans-serif; margin:14px 0 0; }
-        .tpt-notes { margin-top:16px; border-top:2px dotted var(--rule); padding-top:10px; }
-        .tpt-notes-label { font:700 11px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin:0; }
+        .tpt-keyblock { margin:0 0 10px; }
+        .tpt-notes { margin-top:16px; border-top:2px dotted #D8D5CE; padding-top:10px; }
+        .tpt-notes-label { font:700 11px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:${hc}; margin:0; }
         @media print {
           .tpt-page { box-shadow:none; border-radius:0; margin:0; max-width:none; padding:0.15in 0.1in; }
         }
@@ -1551,7 +1572,9 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
               </div>
               <TptScallop color={hc} grade={ord} />
             </header>
-            <pre className="tpt-key">{parsed.answerKey}</pre>
+            {answerKeyBlocks(parsed.answerKey).map((b, i) => (
+              <pre key={i} className="tpt-key tpt-keyblock">{b}</pre>
+            ))}
             {parsed.teacherNotes && (
               <div className="tpt-notes">
                 <p className="tpt-notes-label">Teacher Notes</p>
