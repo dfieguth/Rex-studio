@@ -356,7 +356,7 @@ function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic)
   const gg = gradeGuard[grade] || gradeGuard[4];
 
   const supportPlans = {
-    math: `- Begin with a "Helpful Hints" box right after the directions with the key vocabulary, formulas, or steps.
+    math: `- Begin with a "Helpful Hints" box in the [SUPPORT BOX] provided, with the key vocabulary, formulas, or steps.
 - Before question 1, include ONE fully worked example labeled "Example" showing every computation step for this exact skill.
 - Multiple choice: give only THREE answer choices (A, B, C), not four.
 - Use friendlier numbers within the grade (simpler fractions, smaller whole numbers, fewer regrouping steps).
@@ -364,12 +364,12 @@ function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic)
 - Include one problem built around a described visual model (number line, array, or area model) the student completes.
 - Put a sentence frame on every written response, e.g. "I solved it by ______".`,
     elaReading: `- Keep the passage shorter and use simpler sentence structure while keeping the same topic. Number the paragraphs.
-- Add a "Word Bank" box before the questions defining 3-4 tricky words FROM the passage in kid-friendly terms.
+- Add a "Word Bank" in the [SUPPORT BOX] provided, defining 3-4 tricky words FROM the passage in kid-friendly terms.
 - Before question 1, include ONE worked example labeled "Example" that answers an evidence question and names the paragraph where the answer was found.
 - Multiple choice: give only THREE answer choices (A, B, C), not four.
 - Ask questions in the same order the passage gives the information.
 - Put evidence sentence starters on written items: "The text says ______. This shows ______."`,
-    elaGrammar: `- Begin with a "Rules Box" right after the directions stating the target rule(s) with one clear example of each.
+    elaGrammar: `- Begin with a "Rules Box" in the [SUPPORT BOX] provided, stating the target rule(s) with one clear example of each.
 - Before question 1, include ONE worked example labeled "Example" applying the rule step by step.
 - Multiple choice: give only THREE answer choices (A, B, C), not four.
 - Test one rule per question; no mixed-rule items.
@@ -379,15 +379,15 @@ function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic)
 - In the Brainstorm box task, provide 2 example ideas already listed, and ask the student to add their own.
 - Make the Organize task a labeled frame (Beginning / Middle / End, or Opinion / Reason 1 / Reason 2).
 - Start the draft task with a paragraph frame containing blanks the student completes, then lines to continue.
-- Include a "Word Bank" of linking and temporal words that fit this genre.
+- Include a "Word Bank" of linking and temporal words that fit this genre, in the [SUPPORT BOX] provided.
 - Make every Check Your Work item concrete and observable, e.g. "Did I write my opinion in the first sentence?"`,
-    science: `- Begin with a "Word Bank" box defining the science vocabulary in kid-friendly terms.
+    science: `- Begin with a "Word Bank" in the [SUPPORT BOX] provided, defining the science vocabulary in kid-friendly terms.
 - Before question 1, include ONE worked example labeled "Example" that models the thinking out loud: "I notice ______, so I think ______ because ______."
 - Multiple choice: give only THREE answer choices (A, B, C), not four.
 - Put claim-evidence sentence frames on written items: "I claim ______ because I observed ______."
 - Keep any data simple: small tables, whole numbers, clear labels.
 - Split multi-part tasks into labeled Part A and Part B.`,
-    social: `- Begin with a "Word Bank" box listing the key names, places, and terms with kid-friendly meanings.
+    social: `- Begin with a "Word Bank" in the [SUPPORT BOX] provided, listing the key names, places, and terms with kid-friendly meanings.
 - Before question 1, include ONE worked example labeled "Example" that answers a history question and tells where the answer comes from.
 - Multiple choice: give only THREE answer choices (A, B, C), not four.
 - Support sequence questions with a simple first / next / last structure or 3-step timeline to complete.
@@ -653,7 +653,10 @@ ${gradeLabel} Grade · ${subjectId.toUpperCase()} · ${std.codes}
 [DIRECTIONS]
 (${directionsHint})
 
-${hasPassage ? `[PASSAGE]
+${difficulty === "support" ? `[SUPPORT BOX]
+(Write ONLY the word bank, helpful hints, or rules box content here, whichever fits this subject: vocabulary, formulas, or the target rule(s), with a short title line like "Word Bank" or "Helpful Hints" or "Rules Box" as the first line, then the content on its own lines below. This is the ONLY place this content appears. Do NOT repeat any part of it inside the Directions, the Passage, Question 1, or anywhere else on the worksheet.)
+
+` : ""}${hasPassage ? `[PASSAGE]
 (YOUR PASSAGE TITLE IN ALL CAPS)
 (Your original ${gs.passageWords} word passage goes here. ${gs.passageStyle} Write ONLY the passage text. No instructions. No brackets. No placeholders. Real sentences only. Start writing the passage immediately after the title line.)
 
@@ -679,6 +682,8 @@ Standards: ${std.codes}
 Tips: (2-3 sentences on differentiation, misconceptions, suggested use)
 
 ${dokRules}${castRules}${assessmentRules}
+
+NO DUPLICATION (required): every box, sentence, and example appears exactly ONCE, in the one place the template puts it. Never restate the Support Box content, the passage, or a worked example a second time anywhere else on the page, including inside the Directions.
 
 ANSWER ACCURACY (required):
 - Work every problem yourself BEFORE writing the answer key, and write the key from that work.
@@ -715,7 +720,7 @@ function inferType(heading) {
 
 function parseWorksheet(text) {
   const get = (tag) => {
-    const re = new RegExp(`\\[${tag}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n\\[(?:TITLE|SUBTITLE|DIRECTIONS|PASSAGE|SECTION|BONUS|ANSWER|TEACHER)|$)`, "i");
+    const re = new RegExp(`\\[${tag}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n\\[(?:TITLE|SUBTITLE|DIRECTIONS|SUPPORT BOX|PASSAGE|SECTION|BONUS|ANSWER|TEACHER)|$)`, "i");
     const m = text.match(re);
     return m ? m[1].trim() : "";
   };
@@ -781,6 +786,7 @@ function parseWorksheet(text) {
     title: get("TITLE"),
     subtitle: get("SUBTITLE"),
     directions: get("DIRECTIONS"),
+    supportBox: get("SUPPORT BOX"),
     passage,
     sections,
     bonus: get("BONUS"),
@@ -964,13 +970,26 @@ async function saveWorksheetPdf(parsed, subject, grade) {
   const html2pdf = await loadHtml2Pdf();
   const el = document.querySelector(".rex-print-area");
   if (!el) throw new Error("Generate a worksheet first.");
+  // Wait for web fonts (Baloo 2, Atkinson Hyperlegible) to finish loading before
+  // the snapshot. Capturing mid font-swap causes layout reflow that produces
+  // blank gaps and text sliced across page boundaries in the exported PDF.
+  try {
+    if (typeof document !== "undefined" && document.fonts && document.fonts.ready) {
+      await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]);
+    }
+  } catch {
+    // Font readiness is a best-effort improvement, never block the export on it.
+  }
   await html2pdf().set({
     margin: [0.4, 0.35, 0.4, 0.35],
     filename: pdfFileName(parsed, subject, grade),
     image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false },
+    // scrollY resets html2canvas's capture offset to the top of the element
+    // regardless of the page's current scroll position, a known html2canvas
+    // gotcha that otherwise produces a blank gap and misaligned pagination.
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false, scrollY: 0, scrollX: 0, windowWidth: el.scrollWidth },
     jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q"] },
+    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block"] },
   }).from(el).save();
 }
 
@@ -996,7 +1015,7 @@ function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
       </div>
       <div className="rex-print-area">
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div style={{background:`linear-gradient(135deg,${hc}18 0%,${hc}06 100%)`,borderTop:`4px solid ${hc}`}} className="px-7 py-5">
+          <div style={{background:`linear-gradient(135deg,${hc}18 0%,${hc}06 100%)`,borderTop:`4px solid ${hc}`}} className="px-7 py-5 rex-header-block">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-xl font-extrabold text-slate-800 tracking-tight leading-tight">{parsed.title||"Worksheet"}</h1>
@@ -1011,6 +1030,7 @@ function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
             {parsed.directions&&(<div className="mt-4 bg-white bg-opacity-80 rounded-xl px-4 py-2.5"><span className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mr-2">Directions:</span><span className="text-sm text-slate-700">{parsed.directions}</span></div>)}
           </div>
           {parsed.passage&&(<div className="px-7 pt-5"><div className="bg-slate-50 rounded-xl p-4 border border-slate-100"><p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Read the Passage:</p>{parsed.passage.split("\n").map((line,i)=>(<p key={i} className={`text-sm leading-relaxed ${i===0?"font-bold text-slate-800 mb-1":"text-slate-700"}`}>{line}</p>))}</div></div>)}
+          {parsed.supportBox&&(<div className="px-7 pt-5"><div style={{background:`${subject.hc}0d`,border:`1.5px solid ${subject.hc}30`}} className="rounded-xl p-4">{parsed.supportBox.split("\n").filter(l=>l.trim()).map((line,i)=>(<p key={i} className={`text-sm leading-relaxed ${i===0?"font-bold uppercase tracking-wide text-xs mb-2":"text-slate-700"}`} style={i===0?{color:subject.hc}:{}}>{line}</p>))}</div></div>)}
           <div className="px-7 py-5 space-y-6">
             {parsed.sections.map((sec,si)=>(
               <div key={si}>
@@ -1323,6 +1343,9 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
         .tpt-passage { margin:16px 0 0; padding:14px 16px; border:1.5px solid var(--rule); border-left:5px solid var(--accent); border-radius:8px; background:${hc}0a; }
         .tpt-passage-title { font:800 14px 'Baloo 2',sans-serif; letter-spacing:1.5px; margin:0 0 6px; }
         .tpt-passage-body { margin:0 0 6px; font-size:13.5px; line-height:1.62; }
+        .tpt-supportbox { margin:16px 0 0; padding:12px 14px; border:1.5px solid var(--accent); border-radius:8px; background:${hc}0d; }
+        .tpt-supportbox-title { font:800 11px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; }
+        .tpt-supportbox-line { margin:0 0 4px; font-size:13px; line-height:1.55; }
         .tpt-section { margin-top:20px; }
         .tpt-sechead { display:flex; align-items:center; gap:10px; margin:0 0 12px; }
         .tpt-sechead span { font:700 13px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); white-space:nowrap; }
@@ -1378,6 +1401,13 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
           </header>
           {parsed.directions && (
             <div className="tpt-directions"><span className="tpt-tab">Directions</span><p>{parsed.directions}</p></div>
+          )}
+          {parsed.supportBox && (
+            <div className="tpt-supportbox">
+              {parsed.supportBox.split("\n").filter(l => l.trim()).map((l, i) => i === 0
+                ? <p key={i} className="tpt-supportbox-title">{l}</p>
+                : <p key={i} className="tpt-supportbox-line">{l}</p>)}
+            </div>
           )}
           {parsed.passage && (
             <div className="tpt-passage">
