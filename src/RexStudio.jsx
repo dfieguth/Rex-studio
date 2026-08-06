@@ -1072,7 +1072,7 @@ async function saveWorksheetPdf(parsed, subject, grade) {
     // gotcha that otherwise produces a blank gap and misaligned pagination.
     html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false, scrollY: 0, scrollX: 0 },
     jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block", ".tpt-directions", ".tpt-supportbox", ".tpt-passage", ".tpt-bonus"] },
+    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block", ".tpt-directions", ".tpt-supportbox", ".tpt-passage", ".tpt-bonus", ".tpt-firstblock"] },
     }).from(el).save();
   } finally {
     el.classList.remove("rex-pdf-export");
@@ -1444,6 +1444,7 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
         .tpt-supportbox-title { font:800 11px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin:0 0 6px; }
         .tpt-supportbox-line { margin:0 0 4px; font-size:13px; line-height:1.55; }
         .tpt-section { margin-top:20px; }
+        .tpt-firstblock { display:block; }
         .tpt-sechead { display:flex; align-items:center; gap:10px; margin:0 0 12px; }
         .tpt-sechead span { font:700 13px 'Baloo 2',sans-serif; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); white-space:nowrap; }
         .tpt-sechead::after { content:""; flex:1; border-top:2px dotted var(--rule); }
@@ -1516,12 +1517,18 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
                 : <p key={i} className="tpt-passage-body">{l}</p>)}
             </div>
           )}
-          {parsed.sections.map((sec, si) => (
-            <section key={si} className="tpt-section">
-              <h2 className="tpt-sechead"><span>{sec.heading}</span></h2>
-              {tptRenderSection(sec)}
-            </section>
-          ))}
+          {parsed.sections.map((sec, si) => {
+            const qs = tptRenderSection(sec);
+            return (
+              <section key={si} className="tpt-section">
+                <div className="tpt-firstblock">
+                  <h2 className="tpt-sechead"><span>{sec.heading}</span></h2>
+                  {qs[0]}
+                </div>
+                {qs.slice(1)}
+              </section>
+            );
+          })}
           {parsed.bonus && (
             <div className="tpt-bonus">
               <p className="tpt-bonus-label">★ Bonus Challenge</p>
