@@ -963,7 +963,16 @@ function renderSectionHTML(sec) {
         }
       }
       html += `</div></div>`;
-    } else { i++; }
+    } else {
+      // A section with no numbered items (for example the assessment Scoring
+      // block) still has real content. Render it instead of dropping it.
+      if (!line.startsWith("[") && !/^TYPE:/i.test(line)) {
+        html += line.startsWith("___")
+          ? lineHTML
+          : `<p style="font-size:14px;color:#1e293b;font-weight:600;margin:4px 0;">${line}</p>`;
+      }
+      i++;
+    }
   }
   return html;
 }
@@ -1006,7 +1015,9 @@ async function saveWorksheetPdf(parsed, subject, grade) {
   } catch {
     // Font readiness is a best-effort improvement, never block the export on it.
   }
-  await html2pdf().set({
+  el.classList.add("rex-pdf-export");
+  try {
+    await html2pdf().set({
     margin: [0.4, 0.35, 0.4, 0.35],
     filename: pdfFileName(parsed, subject, grade),
     image: { type: "jpeg", quality: 0.98 },
@@ -1015,8 +1026,11 @@ async function saveWorksheetPdf(parsed, subject, grade) {
     // gotcha that otherwise produces a blank gap and misaligned pagination.
     html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false, scrollY: 0, scrollX: 0 },
     jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block"] },
-  }).from(el).save();
+    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block", ".tpt-directions", ".tpt-supportbox", ".tpt-passage", ".tpt-bonus", ".tpt-section", ".tpt-notes"] },
+    }).from(el).save();
+  } finally {
+    el.classList.remove("rex-pdf-export");
+  }
 }
 
 function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
@@ -1285,7 +1299,16 @@ function tptRenderSection(sec) {
     const line = lines[i].trim();
     if (!line) { i++; continue; }
     const q = line.match(/^(\d+)\.\s+(.+)/);
-    if (!q) { i++; continue; }
+    if (!q) {
+      // Prose-only section content (for example the assessment Scoring block).
+      if (!line.startsWith("[") && !/^TYPE:/i.test(line)) {
+        out.push(line.startsWith("___")
+          ? <div key={"pl" + i} className="tpt-line" />
+          : <p key={"pl" + i} className="tpt-scoreline">{line}</p>);
+      }
+      i++;
+      continue;
+    }
     const body = [];
     if (sec.type === "multiple_choice") {
       let j = i + 1;
@@ -1381,6 +1404,7 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
         .tpt-qbody { flex:1; }
         .tpt-qtext { margin:0 0 8px; font-size:13.5px; line-height:1.55; font-weight:700; }
         .tpt-inline { margin:4px 0; font-size:13px; line-height:1.5; white-space:pre-wrap; }
+        .tpt-scoreline { margin:6px 0; font:700 15px 'Baloo 2',sans-serif; letter-spacing:0.5px; }
         .tpt-choice { display:flex; align-items:center; gap:9px; margin-bottom:6px; font-size:13px; }
         .tpt-bubble { width:19px; height:19px; border:1.8px solid var(--ink); border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 10px 'Baloo 2',sans-serif; flex-shrink:0; }
         .tpt-line { border-bottom:1.5px solid var(--rule); height:26px; }
@@ -1399,6 +1423,8 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
         @media print {
           .tpt-page { box-shadow:none; border-radius:0; margin:0; max-width:none; padding:0.15in 0.1in; }
         }
+        .rex-pdf-export .tpt-page { box-shadow:none; margin-bottom:0; }
+        .rex-pdf-export .tpt-footer { margin-top:14px; }
       `}</style>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2 rex-no-print">
         <div className="flex gap-2">
