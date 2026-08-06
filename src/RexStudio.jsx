@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sparkles, Printer, Copy, Check, ChevronDown,
   BookOpen, PenTool, FlaskConical, Globe, Calculator,
@@ -688,6 +688,9 @@ NO DUPLICATION (required): every box, sentence, and example appears exactly ONCE
 ANSWER ACCURACY (required):
 - Work every problem yourself BEFORE writing the answer key, and write the key from that work.
 - Recheck every calculation. A wrong answer key is worse than a hard worksheet.
+- Do ALL of this checking silently. The worksheet text must show ONLY the single, final, correct answer for each question. Never write your process of checking or fixing an answer into the output.
+- FORBIDDEN in the output: the words "wait," "recheck," "let me," "actually," "hold on," "correction," or any sentence that second-guesses or revises an answer in front of the reader. If you catch a mistake, silently fix it and write only the corrected version.
+- Each question number appears in the answer key EXACTLY ONCE. Never write the same question number twice, even to show a fix.
 - The key must answer EVERY numbered question, using the same numbers, in the same order, and nothing that is not on the worksheet.
 - For multiple choice, the letter in the key must match the letter of the correct option as written in the question.
 - Make sure exactly one option is defensibly correct for single-answer multiple choice.
@@ -716,6 +719,39 @@ function inferType(heading) {
   if (h.includes("true") || h.includes("false")) return "true_false";
   if (h.includes("fill") || h.includes("blank")) return "fill_blank";
   return "short_answer";
+}
+
+// The model is instructed to verify its work silently, but that instruction can
+// be ignored: it sometimes writes its live self-correction into the answer key
+// ("Wait, let me recheck... Correction: ...") and repeats the question number a
+// second time. This detects that pattern in code and removes it deterministically,
+// keeping only the LAST occurrence of any duplicated number, since the later one
+// is the corrected version in every observed case.
+function cleanAnswerKey(text) {
+  if (!text) return text;
+  const lines = text.split("\n");
+  const blocks = [];
+  let current = { num: null, lines: [] };
+  for (const line of lines) {
+    const m = line.match(/^\s*(\d+)[.)]\s/);
+    if (m) {
+      if (current.lines.length) blocks.push(current);
+      current = { num: m[1], lines: [line] };
+    } else {
+      current.lines.push(line);
+    }
+  }
+  if (current.lines.length) blocks.push(current);
+
+  const lastIndexForNum = {};
+  blocks.forEach((b, i) => { if (b.num) lastIndexForNum[b.num] = i; });
+  const kept = blocks.filter((b, i) => !b.num || lastIndexForNum[b.num] === i);
+
+  let cleaned = kept.map((b) => b.lines.join("\n")).join("\n");
+  // Safety net for a stray correction line that landed outside any numbered block.
+  cleaned = cleaned.replace(/^[ \t]*Correction:.*$/gim, "");
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n").trim();
+  return cleaned;
 }
 
 function parseWorksheet(text) {
@@ -816,7 +852,7 @@ function parseWorksheet(text) {
     passage,
     sections,
     bonus: get("BONUS"),
-    answerKey: get("ANSWER KEY"),
+    answerKey: cleanAnswerKey(get("ANSWER KEY")),
     teacherNotes: get("TEACHER NOTES"),
   };
 }
@@ -1005,12 +1041,22 @@ async function saveWorksheetPdf(parsed, subject, grade) {
   const html2pdf = await loadHtml2Pdf();
   const el = document.querySelector(".rex-print-area");
   if (!el) throw new Error("Generate a worksheet first.");
-  // Wait for web fonts (Baloo 2, Atkinson Hyperlegible) to finish loading before
-  // the snapshot. Capturing mid font-swap causes layout reflow that produces
-  // blank gaps and text sliced across page boundaries in the exported PDF.
+  // Wait for the TPT web fonts to finish loading before the snapshot. Capturing
+  // mid font-swap causes layout reflow that produces blank gaps and text sliced
+  // across page boundaries in the exported PDF. The <link> tag is inserted once
+  // when the app mounts (see RexStudio), so by the time anyone can reach this
+  // button the fetch has almost always already finished; this just covers the
+  // rare case of a very fast click on a very slow connection.
   try {
+    const link = document.getElementById("rex-tpt-fonts");
+    if (link && !link.dataset.loaded) {
+      await Promise.race([
+        new Promise((resolve) => { link.addEventListener("load", resolve, { once: true }); link.addEventListener("error", resolve, { once: true }); }),
+        new Promise((r) => setTimeout(r, 2000)),
+      ]);
+    }
     if (typeof document !== "undefined" && document.fonts && document.fonts.ready) {
-      await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]);
+      await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1000))]);
     }
   } catch {
     // Font readiness is a best-effort improvement, never block the export on it.
@@ -1026,7 +1072,7 @@ async function saveWorksheetPdf(parsed, subject, grade) {
     // gotcha that otherwise produces a blank gap and misaligned pagination.
     html2canvas: { scale: 2, useCORS: true, backgroundColor: "#FFFFFF", logging: false, scrollY: 0, scrollX: 0 },
     jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block", ".tpt-directions", ".tpt-supportbox", ".tpt-passage", ".tpt-bonus", ".tpt-section", ".tpt-notes"] },
+    pagebreak: { mode: ["css", "legacy"], before: [".rex-answer-key", ".tpt-keypage"], avoid: [".tpt-q", ".tpt-header", ".rex-header-block", ".tpt-directions", ".tpt-supportbox", ".tpt-passage", ".tpt-bonus"] },
     }).from(el).save();
   } finally {
     el.classList.remove("rex-pdf-export");
@@ -1376,7 +1422,9 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
   return (
     <div className="tpt-scope" style={{ "--accent": hc }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap');
+        /* Baloo 2 and Atkinson Hyperlegible are preloaded once at the app level
+           (see RexStudio's mount effect), not here, so the fetch has already
+           finished long before this view can even be reached. */
         .tpt-scope { --ink:#2B2A33; --pencil:#8A867C; --rule:#D8D5CE; color:var(--ink); font-family:'Atkinson Hyperlegible',sans-serif; }
         .tpt-page { background:#fff; margin:0 auto 24px; padding:0.55in 0.6in 0.4in; box-shadow:0 2px 14px rgba(43,42,51,.12); border-radius:6px; max-width:8.5in; }
         .tpt-header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; border-bottom:3px solid var(--accent); padding-bottom:14px; }
@@ -1515,6 +1563,25 @@ function TPTPrintView({ parsed, subject, grade, showKey, onToggleKey }) {
 }
 
 export default function RexStudio() {
+  // The TPT view's fonts (Baloo 2, Atkinson Hyperlegible) previously loaded via an
+  // @import inside TPTPrintView's own <style> tag, so the fetch only started once
+  // someone switched to that view. Hitting Save as PDF right after switching could
+  // fire the export before the font finished downloading, since document.fonts.ready
+  // only tracks fonts the browser has already registered, and there is a real gap
+  // between the <style> tag mounting and the @import being parsed. Loading them
+  // here, once, as soon as the app starts, means they are already cached by the
+  // time anyone reaches the TPT view at all.
+  useEffect(() => {
+    if (typeof document === "undefined" || document.getElementById("rex-tpt-fonts")) return;
+    const link = document.createElement("link");
+    link.id = "rex-tpt-fonts";
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap";
+    link.addEventListener("load", () => { link.dataset.loaded = "1"; }, { once: true });
+    link.addEventListener("error", () => { link.dataset.loaded = "1"; }, { once: true });
+    document.head.appendChild(link);
+  }, []);
+
   const [apiKey, setApiKey] = useState(()=>{ try{return JSON.parse(localStorage.getItem("tos2_settings")||"{}").apiKey||"";}catch{return "";} });
   const [showApi, setShowApi] = useState(false);
   const [grade, setGrade] = useState(5);
