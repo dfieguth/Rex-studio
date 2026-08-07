@@ -1170,7 +1170,7 @@ function answerKeyWarnings(parsed) {
   // prompt rule and cleanAnswerKey both only reliably catch the case where the
   // model restarts with a fresh number. A single entry can still second-guess
   // itself in place.
-  if (/\b(wait|let me|hold on)\b/i.test(key)) w.push("The answer key still contains visible self-correction language ('wait', 'let me', or 'hold on').");
+  if (/\b(wait|let me|hold on|actually)\b/i.test(key)) w.push("The answer key still contains visible self-correction language ('wait', 'let me', 'hold on', or 'actually').");
 
   // Self-contradiction within one entry: opens with one letter, later states a
   // different one as the actual correct answer.
