@@ -699,6 +699,8 @@ ${dokRules}${castRules}${selectAllRules}${assessmentRules}
 
 NO DUPLICATION (required): every box, sentence, and example appears exactly ONCE, in the one place the template puts it. Never restate the Support Box content, the passage, or a worked example a second time anywhere else on the page, including inside the Directions.
 
+QUESTION TEXT ACCURACY (required): decide every number, name, and value BEFORE writing a question, not while writing it. Write each question ONCE, cleanly, in its final form. Never write a placeholder, a wrong number, or a partial sentence and then correct it in front of the reader anywhere on the student-facing page, including the Directions, the Support Box, and every question. The words "wait," "let me," "hold on," and "actually" are FORBIDDEN in question text, not only in the answer key.
+
 ANSWER ACCURACY (required):
 - Work every problem yourself BEFORE writing the answer key, and write the key from that work.
 - Recheck every calculation. A wrong answer key is worse than a hard worksheet.
@@ -1216,6 +1218,17 @@ function worksheetWarnings(parsed, rawText) {
   if (!parsed.sections.length) w.push("No question sections were found.");
   if (!parsed.answerKey) w.push("The answer key is missing, which usually means the generation was cut off.");
   else if (!/\[TEACHER NOTES\]/i.test(rawText || "")) w.push("Teacher notes are missing.");
+  // Visible self-correction is not only an answer-key problem: it can leak
+  // into the actual student-facing question text ("Write the value of the
+  // digit 7 in the number 472,schleswig Wait — here is the number: 472,319.").
+  // Scan every student-facing field, not only the answer key, for the same
+  // hedge language.
+  const HEDGE_RE = /\b(wait|let me|hold on|actually)\b/i;
+  if (HEDGE_RE.test(parsed.directions || "")) w.push("The directions contain visible self-correction language, which should never reach the student page.");
+  if (HEDGE_RE.test(parsed.supportBox || "")) w.push("The support box contains visible self-correction language, which should never reach the student page.");
+  parsed.sections.forEach((sec) => {
+    if (HEDGE_RE.test(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains visible self-correction language, which should never reach the student page.");
+  });
   parsed.sections.forEach((sec) => {
     const lines = sec.content.split("\n").map((l) => l.trim());
     const qs = lines.filter((l) => /^\d+\.\s*/.test(l));
