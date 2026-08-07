@@ -690,10 +690,14 @@ ANSWER ACCURACY (required):
 - Recheck every calculation. A wrong answer key is worse than a hard worksheet.
 - Do ALL of this checking silently. The worksheet text must show ONLY the single, final, correct answer for each question. Never write your process of checking or fixing an answer into the output.
 - FORBIDDEN in the output: the words "wait," "recheck," "let me," "actually," "hold on," "correction," or any sentence that second-guesses or revises an answer in front of the reader. If you catch a mistake, silently fix it and write only the corrected version.
+- Whatever answer or letter you state FIRST in a key entry must BE the final answer. Never open an entry with one answer and conclude with a different one; decide the correct answer before writing the entry, not while writing it.
 - Each question number appears in the answer key EXACTLY ONCE. Never write the same question number twice, even to show a fix.
 - The key must answer EVERY numbered question, using the same numbers, in the same order, and nothing that is not on the worksheet.
 - For multiple choice, the letter in the key must match the letter of the correct option as written in the question.
 - Make sure exactly one option is defensibly correct for single-answer multiple choice.
+- No two answer choices on the same question may have the same text or the same value. Every option must be distinct.
+- For select-all-that-apply items, the correct set must be a genuine mix: never mark every offered choice correct, never mark none correct. State exactly which letters are correct and explain why each excluded letter is wrong.
+- For error-analysis items, the mistake you discuss in the answer key must be the EXACT scenario, numbers, and error shown in the question on the worksheet. Never invent a different mistake or change the numbers when writing the key.
 
 RULES:
 - No placeholder text ever. Real content, numbers, and scenarios only.
@@ -844,7 +848,7 @@ function parseWorksheet(text) {
   // the same content twice on the page. Anything that looks like a box header is
   // cut out of the directions here, in code, and recovered into supportBox if the
   // marker was skipped entirely. Real directions are 1-2 sentences.
-  const BOX_HEADER = /(?:^|\n|\s)[^\S\n]*(?:[\u2014\u2013\-_=]{3,}\s*)?(?:\u{1F9E0}|\u{1F4E6}|\u2b50|\u2605)?\s*\b(HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b/iu;
+  const BOX_HEADER = /(?:[\u2014\u2013\-_=]{3,}\s*(?:\u{1F9E0}|\u{1F4E6}|\u2b50|\u2605)?\s*\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b|(?:^|\n)[^\S\n]*(?:\u{1F9E0}|\u{1F4E6}|\u2b50|\u2605)?\s*\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b|\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b\s*:)/iu;
   let directions = get("DIRECTIONS");
   let supportBox = get("SUPPORT BOX");
   const strayBox = directions.match(BOX_HEADER);
@@ -863,6 +867,26 @@ function parseWorksheet(text) {
     .join("\n")
     .replace(/^\s*[\u2014\u2013\-_=]{3,}\s*/, "")
     .trim();
+
+  // Same leakage can happen as a PREFIX inside a section's content instead of
+  // inside Directions, most often the first section (for example just before
+  // "1. Brainstorm..." on a Writing worksheet). Strip it there too. Only the
+  // portion before the first real numbered item is ever touched.
+  sections.forEach((sec) => {
+    const boxMatch = sec.content.match(BOX_HEADER);
+    if (!boxMatch) return;
+    const firstQIdx = sec.content.search(/^\s*\d+[.)]\s/m);
+    if (firstQIdx <= 0 || boxMatch.index >= firstQIdx) return;
+    const strayLead = sec.content
+      .slice(0, firstQIdx)
+      .split("\n")
+      .filter((l) => !/^[\s\u2014\u2013\-_=\u2500-\u257F]*$/.test(l) || !l.trim())
+      .join("\n")
+      .replace(/^\s*[\u2014\u2013\-_=]{3,}\s*/, "")
+      .trim();
+    if (!supportBox || supportBox.length < strayLead.length) supportBox = strayLead;
+    sec.content = sec.content.slice(firstQIdx).replace(/^\n+/, "");
+  });
 
   return {
     title: get("TITLE"),
@@ -895,8 +919,8 @@ function answerKeyWarnings(parsed) {
     const lines = sec.content.split("\n").map((l) => l.trim());
     let current = null;
     lines.forEach((l) => {
-      const q = l.match(/^(\d+)\.\s/);
-      if (q) { current = q[1]; questions.set(current, { heading: sec.heading, type: sec.type, choices: [] }); return; }
+      const q = l.match(/^(\d+)\.\s(.*)/);
+      if (q) { current = q[1]; questions.set(current, { heading: sec.heading, type: sec.type, choices: [], text: q[2] || "" }); return; }
       const c = l.match(/^([A-F])\./);
       if (c && current && questions.has(current)) questions.get(current).choices.push(c[1]);
     });
@@ -935,6 +959,37 @@ function answerKeyWarnings(parsed) {
     });
     if (declared && summed && parseInt(declared) !== summed) w.push("Point total does not add up: the scoring line says " + declared + " but the items total " + summed + ".");
   }
+  // Hedge language that survives even without duplicate numbering, since the
+  // prompt rule and cleanAnswerKey both only reliably catch the case where the
+  // model restarts with a fresh number. A single entry can still second-guess
+  // itself in place.
+  if (/\b(wait|let me|hold on)\b/i.test(key)) w.push("The answer key still contains visible self-correction language ('wait', 'let me', or 'hold on').");
+
+  // Self-contradiction within one entry: opens with one letter, later states a
+  // different one as the actual correct answer.
+  const keyBlocks = [];
+  { let cur = { num: null, text: "" };
+    key.split("\n").forEach((l) => {
+      const m = l.match(/^\s*(\d+)[.)]\s/);
+      if (m) { if (cur.num) keyBlocks.push(cur); cur = { num: m[1], text: l }; }
+      else cur.text += "\n" + l;
+    });
+    if (cur.num) keyBlocks.push(cur);
+  }
+  keyBlocks.forEach((b) => {
+    const open = b.text.match(/^\s*\d+[.)]\s*\(?([A-F])\b/);
+    const later = b.text.match(/correct answer is\s*\(?([A-F])\b/i);
+    if (open && later && open[1] !== later[1]) w.push("Question " + b.num + "'s answer key entry opens with " + open[1] + " but later states the correct answer is " + later[1] + ".");
+  });
+
+  // Select-all items should have a genuine mix, not every offered choice correct.
+  keyBlocks.forEach((b) => {
+    const q = questions.get(b.num);
+    if (!q || !/select[\s-]?all/i.test(q.text || "")) return;
+    const correctLetters = new Set((b.text.match(/\b([A-F])\b(?=[\s,.]|$)/g) || []).map((x) => x.trim()));
+    if (q.choices.length && correctLetters.size >= q.choices.length) w.push("Question " + b.num + " asks to select all that apply, but the key marks every offered choice correct.");
+  });
+
   return w;
 }
 
@@ -953,6 +1008,20 @@ function worksheetWarnings(parsed, rawText) {
     if (sec.type === "multiple_choice" && qs.length) {
       const choices = lines.filter((l) => /^[A-F]\./.test(l)).length;
       if (choices < qs.length * 2) w.push("Some questions in \"" + sec.heading + "\" are missing answer choices.");
+      // Duplicate answer text within a single question (grouped between one
+      // question line and the next), not just duplicates across the section.
+      let qNum = null, group = [];
+      const flushGroup = () => {
+        const texts = group.map((l) => l.replace(/^[A-F]\.\s*/, "").trim().toLowerCase()).filter(Boolean);
+        const dupe = texts.length && new Set(texts).size !== texts.length;
+        if (dupe) w.push("Question " + qNum + " in \"" + sec.heading + "\" has two answer choices with the same text.");
+      };
+      lines.forEach((l) => {
+        const qm = l.match(/^(\d+)\.\s/);
+        if (qm) { if (qNum) flushGroup(); qNum = qm[1]; group = []; return; }
+        if (/^[A-F]\./.test(l)) group.push(l);
+      });
+      if (qNum) flushGroup();
     }
   });
   return w.concat(answerKeyWarnings(parsed));
