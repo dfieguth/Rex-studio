@@ -925,14 +925,24 @@ function parseWorksheet(text) {
 // language ("A and C are correct", "correct answers: A, C", "the answer is B"),
 // in the order they appear, normalized (sorted, uppercase, no separators).
 // Shared by the select-all checks and the fraction verifier below.
-function keyLetterGroups(text) {
+function keyLetterGroups(text, onlySetClaims) {
   const LETLIST = "[A-F]\\b(?:\\s*,?\\s*(?:and\\s+|&\\s*)?[A-F]\\b)*";
-  const re = new RegExp("\\b(" + LETLIST + ")\\s+(?:is|are)\\s+(?:all\\s+)?correct\\b|correct\\s+(?:answers?|choices?):?\\s*\\(?(" + LETLIST + ")\\)?|(?:the\\s+)?answers?\\s+(?:is|are)\\s*:?\\s*\\(?(" + LETLIST + ")\\)?", "gi");
+  const individualPattern = "\\b(" + LETLIST + ")\\s*(?:\\([^)]*\\))?\\s+(?:is|are)\\s+(?:all\\s+)?correct\\b";
+  const summaryPattern = "correct\\s+(?:answers?|choices?):?\\s*\\(?(" + LETLIST + ")\\)?|(?:the\\s+)?answers?\\s+(?:is|are)\\s*:?\\s*\\(?(" + LETLIST + ")\\)?";
+  const re = new RegExp(individualPattern + "|" + summaryPattern, "gi");
   const out = [];
   let m;
   while ((m = re.exec(text)) !== null) {
     const letters = (m[1] || m[2] || m[3] || "").match(/\b[A-F]\b/gi);
-    if (letters) out.push(letters.map((x) => x.toUpperCase()).sort().join(""));
+    if (!letters) continue;
+    // A single letter stated individually ("A is correct.") is one fact among
+    // several, not a competing candidate answer set, and should never be
+    // treated as evidence of revision. Only a multi-letter claim or an
+    // explicit "correct answers:" style summary genuinely proposes a full
+    // set worth comparing against other proposed sets.
+    const isSummaryMatch = m[2] !== undefined || m[3] !== undefined;
+    if (onlySetClaims && !isSummaryMatch && letters.length < 2) continue;
+    out.push(letters.map((x) => x.toUpperCase()).sort().join(""));
   }
   return out;
 }
@@ -948,15 +958,18 @@ function checkFractionEquivalence(parsed, extractTarget) {
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
   parsed.sections.forEach((sec) => {
     const lines = sec.content.split("\n").map((l) => l.trim());
-    let qNum = null, qText = "", optLines = [];
+    let qNum = null, qText = "", optLines = [], seenOption = false;
     const flush = () => {
       if (!qNum) return;
       const target = extractTarget(qText);
       if (!target) return;
       const { n: tn, d: td } = target;
       const options = {};
+      // Option lines can carry trailing text (a point value, a note), not just
+      // the bare fraction, so only the leading fraction is required, not an
+      // exact end-of-line match.
       optLines.forEach((l) => {
-        const om = l.match(/^([A-F])\.\s*(\d+)\s*\/\s*(\d+)\s*$/);
+        const om = l.match(/^([A-F])\.\s*(\d+)\s*\/\s*(\d+)\b/);
         if (om) options[om[1]] = { n: parseInt(om[2]), d: parseInt(om[3]) };
       });
       if (!Object.keys(options).length) return;
@@ -964,7 +977,9 @@ function checkFractionEquivalence(parsed, extractTarget) {
       if (!keyBlockMatch) return;
       const groups = keyLetterGroups(keyBlockMatch[0]);
       const single = keyBlockMatch[0].match(/^\s*\d+[.)]\s*\(?([A-F])\b/);
-      const keyCorrect = groups.length ? new Set(groups[groups.length - 1].split("")) : (single ? new Set([single[1].toUpperCase()]) : new Set());
+      const unioned = new Set();
+      groups.forEach((g) => g.split("").forEach((ch) => unioned.add(ch)));
+      const keyCorrect = unioned.size ? unioned : (single ? new Set([single[1].toUpperCase()]) : new Set());
       if (!keyCorrect.size) return;
       Object.entries(options).forEach(([letter, frac]) => {
         const isEquiv = frac.n * td === frac.d * tn;
@@ -975,7 +990,13 @@ function checkFractionEquivalence(parsed, extractTarget) {
     };
     lines.forEach((l) => {
       const qm = l.match(/^(\d+)\.\s(.*)/);
-      if (qm) { flush(); qNum = qm[1]; qText = qm[2]; optLines = []; return; }
+      if (qm) { flush(); qNum = qm[1]; qText = qm[2]; optLines = []; seenOption = false; return; }
+      // A long question stem can wrap onto a second line before the options
+      // start; the target phrase ("equal to 4/6") can land on either line, so
+      // keep accumulating stem text until the first real option line appears.
+      const isOptLine = /^[A-F]\.\s*\S/.test(l);
+      if (isOptLine) seenOption = true;
+      else if (!seenOption && l) qText += " " + l;
       optLines.push(l);
     });
     flush();
@@ -985,7 +1006,7 @@ function checkFractionEquivalence(parsed, extractTarget) {
 
 function fractionEquivalenceWarnings(parsed) {
   return checkFractionEquivalence(parsed, (qText) => {
-    const m = qText.match(/equal(?:s|ivalent)?\s+to(?:\s+the\s+fraction)?\s+(\d+)\s*\/\s*(\d+)/i);
+    const m = qText.match(/(?:equal(?:s)?|equivalent)\s+(?:to\s+)?(?:the\s+fraction\s+)?(\d+)\s*\/\s*(\d+)/i);
     if (!m) return null;
     const tn = parseInt(m[1]), td = parseInt(m[2]);
     return tn && td ? { n: tn, d: td } : null;
@@ -998,7 +1019,7 @@ function fractionEquivalenceWarnings(parsed) {
 // cross-multiplication core rather than duplicating the option/key extraction.
 function decimalFractionEquivalenceWarnings(parsed) {
   return checkFractionEquivalence(parsed, (qText) => {
-    const m = qText.match(/(?:equal(?:s|ivalent)?\s+to|represents?|(?:is\s+)?the\s+same\s+as)\s+(?:the\s+decimal\s+)?(\d*\.\d+)/i);
+    const m = qText.match(/(?:(?:equal(?:s)?|equivalent)\s+(?:to\s+)?|represents?\s+|(?:is\s+)?the\s+same\s+as\s+)(?:the\s+decimal\s+)?(\d*\.\d+)/i);
     if (!m) return null;
     const decMatch = m[1].match(/^(\d*)\.(\d+)$/);
     if (!decMatch) return null;
@@ -1093,11 +1114,13 @@ function answerKeyWarnings(parsed) {
   keyBlocks.forEach((b) => {
     const q = questions.get(b.num);
     if (!q || !/select[\s-]?all/i.test(q.text || "")) return;
-    const orderedSets = keyLetterGroups(b.text);
-    const distinct = new Set(orderedSets);
+    const setClaims = keyLetterGroups(b.text, true);
+    const distinct = new Set(setClaims);
     if (distinct.size > 1) w.push("Question " + b.num + "'s answer key shows more than one different answer set for this select-all question, which usually means visible self-correction survived into the output.");
-    const finalSet = orderedSets[orderedSets.length - 1];
-    if (finalSet && q.choices.length && finalSet.length >= q.choices.length) w.push("Question " + b.num + " asks to select all that apply, but the key marks every offered choice correct.");
+    const allGroups = keyLetterGroups(b.text);
+    const unioned = new Set();
+    allGroups.forEach((g) => g.split("").forEach((ch) => unioned.add(ch)));
+    if (unioned.size && q.choices.length && unioned.size >= q.choices.length) w.push("Question " + b.num + " asks to select all that apply, but the key marks every offered choice correct.");
   });
 
   return w;
