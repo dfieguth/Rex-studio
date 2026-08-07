@@ -703,7 +703,8 @@ ANSWER ACCURACY (required):
 - Work every problem yourself BEFORE writing the answer key, and write the key from that work.
 - Recheck every calculation. A wrong answer key is worse than a hard worksheet.
 - Do ALL of this checking silently. The worksheet text must show ONLY the single, final, correct answer for each question. Never write your process of checking or fixing an answer into the output.
-- FORBIDDEN in the output: the words "wait," "recheck," "let me," "actually," "hold on," "correction," or any sentence that second-guesses or revises an answer in front of the reader. If you catch a mistake, silently fix it and write only the corrected version.
+- FORBIDDEN in the output: the words "wait," "recheck," "let me," "actually," "hold on," "correction," "revise," "revising," "revised," "re-examine," "reconsider," or any sentence that second-guesses or revises an answer in front of the reader. If you catch a mistake, silently fix it and write only the corrected version.
+- Every option letter gets ONE verdict in the answer key, correct or incorrect, stated once. Never call the same letter correct in one place and incorrect in another, even while explaining your reasoning.
 - Whatever answer or letter you state FIRST in a key entry must BE the final answer. Never open an entry with one answer and conclude with a different one; decide the correct answer before writing the entry, not while writing it.
 - Each question number appears in the answer key EXACTLY ONCE. Never write the same question number twice, even to show a fix.
 - The key must answer EVERY numbered question, using the same numbers, in the same order, and nothing that is not on the worksheet.
@@ -1031,6 +1032,88 @@ function decimalFractionEquivalenceWarnings(parsed) {
   });
 }
 
+// Word-list bans on "wait," "revising," etc. are a losing game: the model can
+// always reach for a new synonym. This detects the actual INVARIANT a broken
+// key violates instead: the same option letter should never be called both
+// correct and incorrect within one entry, no matter what words surround it.
+function contradictionWarnings(parsed) {
+  const w = [];
+  if (!parsed || !parsed.answerKey) return w;
+  const blocks = [];
+  let cur = { num: null, text: "" };
+  parsed.answerKey.split("\n").forEach((l) => {
+    const m = l.match(/^\s*(\d+)[.)]\s/);
+    if (m) { if (cur.num) blocks.push(cur); cur = { num: m[1], text: l }; }
+    else cur.text += "\n" + l;
+  });
+  if (cur.num) blocks.push(cur);
+
+  blocks.forEach((b) => {
+    const chunks = b.text.split(/(?<=[.!?])\s+|\n+/);
+    const verdicts = {};
+    chunks.forEach((chunk) => {
+      const letterMatch = chunk.match(/\b([A-F])\b/);
+      if (!letterMatch) return;
+      const letter = letterMatch[1].toUpperCase();
+      const isNeg = /\b(?:is|are)\s+(?:not\s+correct|incorrect|wrong)\b/i.test(chunk);
+      const isPos = /\b(?:is|are)\s+correct\b/i.test(chunk);
+      if (isNeg) (verdicts[letter] = verdicts[letter] || new Set()).add("incorrect");
+      if (isPos) (verdicts[letter] = verdicts[letter] || new Set()).add("correct");
+    });
+    Object.entries(verdicts).forEach(([letter, set]) => {
+      if (set.has("correct") && set.has("incorrect")) {
+        w.push("Question " + b.num + ": option " + letter + " is called both correct and incorrect within the same answer key entry, which usually means visible self-correction survived into the output.");
+      }
+    });
+  });
+  return w;
+}
+
+// Directly compares any fraction the key restates for a letter (like "D
+// (6/10)") against what that letter's option ACTUALLY says on the printed
+// worksheet, independent of whether either value happens to be equivalent to
+// a target fraction. This catches a transcription mismatch even when no
+// "equal to N/D" phrasing is present for the fraction-equivalence checker to
+// key off of.
+function optionTranscriptionWarnings(parsed) {
+  const w = [];
+  if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
+  parsed.sections.forEach((sec) => {
+    if (sec.type !== "multiple_choice") return;
+    const lines = sec.content.split("\n").map((l) => l.trim());
+    let qNum = null;
+    const realOptions = {};
+    lines.forEach((l) => {
+      const qm = l.match(/^(\d+)\.\s/);
+      if (qm) { qNum = qm[1]; return; }
+      const om = l.match(/^([A-F])\.\s*(\d+)\s*\/\s*(\d+)\b/);
+      if (om && qNum) realOptions[qNum + om[1]] = { n: parseInt(om[2]), d: parseInt(om[3]) };
+    });
+    const blocks = [];
+    let cur = { num: null, text: "" };
+    parsed.answerKey.split("\n").forEach((l) => {
+      const m = l.match(/^\s*(\d+)[.)]\s/);
+      if (m) { if (cur.num) blocks.push(cur); cur = { num: m[1], text: l }; }
+      else cur.text += "\n" + l;
+    });
+    if (cur.num) blocks.push(cur);
+    blocks.forEach((b) => {
+      const re = /\b([A-F])\s*\((\d+)\s*\/\s*(\d+)\)/g;
+      let m;
+      while ((m = re.exec(b.text)) !== null) {
+        const key = b.num + m[1].toUpperCase();
+        const real = realOptions[key];
+        if (!real) continue;
+        const stated = { n: parseInt(m[2]), d: parseInt(m[3]) };
+        if (real.n !== stated.n || real.d !== stated.d) {
+          w.push("Question " + b.num + ": the key restates option " + m[1].toUpperCase() + " as " + stated.n + "/" + stated.d + ", but the worksheet actually shows " + m[1].toUpperCase() + " as " + real.n + "/" + real.d + ".");
+        }
+      }
+    });
+  });
+  return w;
+}
+
 function answerKeyWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
@@ -1157,7 +1240,7 @@ function worksheetWarnings(parsed, rawText) {
       if (qNum) flushGroup();
     }
   });
-  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed));
+  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed));
 }
 
 function renderSectionHTML(sec) {
