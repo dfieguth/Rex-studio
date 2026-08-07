@@ -310,7 +310,7 @@ function buildPrompt(grade, subjectId, resourceType, difficulty, purpose, topic)
   const purposePlan = {
     practice:   { warm:3, mc:4, apply:2, explain:1, guide:"Lesson practice used right after instruction. Include a worked example or hint box immediately after the directions." },
     homework:   { warm:2, mc:4, apply:2, explain:1, guide:"Homework completable independently in 15-20 minutes. No new concepts." },
-    review:     { warm:2, mc:5, apply:2, explain:2, dok:true, guide:"SBAC/test review. Mirror Smarter Balanced item formats so students practice the FORM of the test, not just the content. Make at least ONE multiple choice question a select-ALL-that-apply with 5 choices, labeled A. through E., with the select-all instruction inside the question text." },
+    review:     { warm:2, mc:5, apply:2, explain:2, dok:true, selectAll:true, guide:"SBAC/test review. Mirror Smarter Balanced item formats so students practice the FORM of the test, not just the content." },
     finisher:   { warm:1, mc:3, apply:2, explain:1, guide:"Early finisher enrichment. Rich, puzzle-like, self-contained challenges." },
     assessment: { warm:1, mc:4, apply:2, explain:1, assess:true, dok:true, guide:"A real graded assessment, not a practice page. Every item must be independently answerable: no hints, no worked examples, no word banks, and no question that gives away the answer to another question." },
   };
@@ -627,6 +627,19 @@ CAST STRUCTURE (5th grade science): The California Science Test is phenomenon-ba
 - Each item should pair a science practice (interpreting data, constructing an explanation, describing a model in words) with the core idea being assessed.
 - Include at least one item that asks students to use evidence from the scenario to explain WHY the phenomenon happens.` : "";
 
+  // A select-all item is only meaningful if some options are true and some are
+  // false. Without an explicit count, the model tends to satisfy "give 5
+  // choices" by listing several correct variations (easiest when the skill
+  // itself is about equivalence, like fractions), which produces a key where
+  // every option is marked correct and defeats the point of the item.
+  const selectAllRules = pp.selectAll ? `
+SELECT-ALL-THAT-APPLY ITEM (required, exactly one such item on this worksheet): make ONE multiple choice question a select-all-that-apply item with 5 choices, labeled A. through E., with the select-all instruction inside the question text.
+- EXACTLY 2 or 3 of the 5 options are correct. Never 1, never 4, never 5, never 0.
+- Each correct option must be independently, genuinely true.
+- Each incorrect option must be a plausible near-miss reflecting a real misconception for this skill, not an obviously wrong throwaway. If the skill is equivalence or comparison (like equivalent fractions), a wrong option should look like it could be equivalent but is not, not simply an unrelated number.
+- Before writing the answer key for this item, count how many options you marked correct. If the count is not 2 or 3, revise the options until it is.
+- The answer key must state exactly which letters are correct AND explain why each of the remaining letters is wrong.` : "";
+
   const sectionText = sec.join("\n\n");
   const keyText = key.join("\n\n");
 
@@ -681,7 +694,7 @@ Bonus: (full solution or sample response)
 Standards: ${std.codes}
 Tips: (2-3 sentences on differentiation, misconceptions, suggested use)
 
-${dokRules}${castRules}${assessmentRules}
+${dokRules}${castRules}${selectAllRules}${assessmentRules}
 
 NO DUPLICATION (required): every box, sentence, and example appears exactly ONCE, in the one place the template puts it. Never restate the Support Box content, the passage, or a worked example a second time anywhere else on the page, including inside the Directions.
 
