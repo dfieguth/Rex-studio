@@ -921,6 +921,95 @@ function parseWorksheet(text) {
 // whether an answer is conceptually right, but it reliably catches keys that
 // skip items, answer items that do not exist, or name a choice that was never
 // offered, which are the errors a teacher notices first.
+// Extracts every letter-group in the text that is explicitly tied to "correct"
+// language ("A and C are correct", "correct answers: A, C", "the answer is B"),
+// in the order they appear, normalized (sorted, uppercase, no separators).
+// Shared by the select-all checks and the fraction verifier below.
+function keyLetterGroups(text) {
+  const LETLIST = "[A-F]\\b(?:\\s*,?\\s*(?:and\\s+|&\\s*)?[A-F]\\b)*";
+  const re = new RegExp("\\b(" + LETLIST + ")\\s+(?:is|are)\\s+(?:all\\s+)?correct\\b|correct\\s+(?:answers?|choices?):?\\s*\\(?(" + LETLIST + ")\\)?|(?:the\\s+)?answers?\\s+(?:is|are)\\s*:?\\s*\\(?(" + LETLIST + ")\\)?", "gi");
+  const out = [];
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const letters = (m[1] || m[2] || m[3] || "").match(/\b[A-F]\b/gi);
+    if (letters) out.push(letters.map((x) => x.toUpperCase()).sort().join(""));
+  }
+  return out;
+}
+
+// Fraction equivalence is exact, bounded math: cross-multiplication either
+// matches or it does not. Unlike arbitrary word-problem arithmetic, REX can
+// verify this specific class of item directly instead of trusting the model's
+// own claim about which options are equivalent, which has been the source of
+// two separate real errors (marking everything correct, and quietly excluding
+// a genuinely correct option like 3/6 from a 2/4-equivalence question).
+function checkFractionEquivalence(parsed, extractTarget) {
+  const w = [];
+  if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
+  parsed.sections.forEach((sec) => {
+    const lines = sec.content.split("\n").map((l) => l.trim());
+    let qNum = null, qText = "", optLines = [];
+    const flush = () => {
+      if (!qNum) return;
+      const target = extractTarget(qText);
+      if (!target) return;
+      const { n: tn, d: td } = target;
+      const options = {};
+      optLines.forEach((l) => {
+        const om = l.match(/^([A-F])\.\s*(\d+)\s*\/\s*(\d+)\s*$/);
+        if (om) options[om[1]] = { n: parseInt(om[2]), d: parseInt(om[3]) };
+      });
+      if (!Object.keys(options).length) return;
+      const keyBlockMatch = parsed.answerKey.match(new RegExp("(?:^|\\n)\\s*" + qNum + "[.)][^\\n]*(?:\\n(?!\\s*\\d+[.)]).*)*", ""));
+      if (!keyBlockMatch) return;
+      const groups = keyLetterGroups(keyBlockMatch[0]);
+      const single = keyBlockMatch[0].match(/^\s*\d+[.)]\s*\(?([A-F])\b/);
+      const keyCorrect = groups.length ? new Set(groups[groups.length - 1].split("")) : (single ? new Set([single[1].toUpperCase()]) : new Set());
+      if (!keyCorrect.size) return;
+      Object.entries(options).forEach(([letter, frac]) => {
+        const isEquiv = frac.n * td === frac.d * tn;
+        const markedCorrect = keyCorrect.has(letter);
+        if (isEquiv && !markedCorrect) w.push("Question " + qNum + ": option " + letter + " (" + frac.n + "/" + frac.d + ") is mathematically equal to " + tn + "/" + td + ", but the key does not mark it correct.");
+        if (!isEquiv && markedCorrect) w.push("Question " + qNum + ": option " + letter + " (" + frac.n + "/" + frac.d + ") is NOT equal to " + tn + "/" + td + ", but the key marks it correct.");
+      });
+    };
+    lines.forEach((l) => {
+      const qm = l.match(/^(\d+)\.\s(.*)/);
+      if (qm) { flush(); qNum = qm[1]; qText = qm[2]; optLines = []; return; }
+      optLines.push(l);
+    });
+    flush();
+  });
+  return w;
+}
+
+function fractionEquivalenceWarnings(parsed) {
+  return checkFractionEquivalence(parsed, (qText) => {
+    const m = qText.match(/equal(?:s|ivalent)?\s+to(?:\s+the\s+fraction)?\s+(\d+)\s*\/\s*(\d+)/i);
+    if (!m) return null;
+    const tn = parseInt(m[1]), td = parseInt(m[2]);
+    return tn && td ? { n: tn, d: td } : null;
+  });
+}
+
+// Decimal-to-fraction equivalence (e.g. "which fraction equals 0.47?") is just
+// as common in the 4.NF standards and just as exactly checkable: convert the
+// decimal to an exact fraction (0.47 -> 47/100) and reuse the same
+// cross-multiplication core rather than duplicating the option/key extraction.
+function decimalFractionEquivalenceWarnings(parsed) {
+  return checkFractionEquivalence(parsed, (qText) => {
+    const m = qText.match(/(?:equal(?:s|ivalent)?\s+to|represents?|(?:is\s+)?the\s+same\s+as)\s+(?:the\s+decimal\s+)?(\d*\.\d+)/i);
+    if (!m) return null;
+    const decMatch = m[1].match(/^(\d*)\.(\d+)$/);
+    if (!decMatch) return null;
+    const whole = parseInt(decMatch[1] || "0", 10);
+    const fracDigits = decMatch[2];
+    const denom = Math.pow(10, fracDigits.length);
+    const num = whole * denom + parseInt(fracDigits, 10);
+    return { n: num, d: denom };
+  });
+}
+
 function answerKeyWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
@@ -1004,14 +1093,7 @@ function answerKeyWarnings(parsed) {
   keyBlocks.forEach((b) => {
     const q = questions.get(b.num);
     if (!q || !/select[\s-]?all/i.test(q.text || "")) return;
-    const LETLIST = "[A-F]\\b(?:\\s*,?\\s*(?:and\\s+|&\\s*)?[A-F]\\b)*";
-    const letterSetRe = new RegExp("\\b(" + LETLIST + ")\\s+(?:is|are)\\s+(?:all\\s+)?correct\\b|correct\\s+(?:answers?|choices?):?\\s*\\(?(" + LETLIST + ")\\)?|(?:the\\s+)?answers?\\s+(?:is|are)\\s*:?\\s*\\(?(" + LETLIST + ")\\)?", "gi");
-    const orderedSets = [];
-    let m;
-    while ((m = letterSetRe.exec(b.text)) !== null) {
-      const letters = (m[1] || m[2] || m[3] || "").match(/\b[A-F]\b/gi);
-      if (letters) orderedSets.push(letters.map((x) => x.toUpperCase()).sort().join(""));
-    }
+    const orderedSets = keyLetterGroups(b.text);
     const distinct = new Set(orderedSets);
     if (distinct.size > 1) w.push("Question " + b.num + "'s answer key shows more than one different answer set for this select-all question, which usually means visible self-correction survived into the output.");
     const finalSet = orderedSets[orderedSets.length - 1];
@@ -1052,7 +1134,7 @@ function worksheetWarnings(parsed, rawText) {
       if (qNum) flushGroup();
     }
   });
-  return w.concat(answerKeyWarnings(parsed));
+  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed));
 }
 
 function renderSectionHTML(sec) {
@@ -1758,9 +1840,26 @@ export default function RexStudio() {
     setLoading(true); setError(""); setRawText(""); setParsed(null); setShowKey(false);
     try {
       const prompt = buildPrompt(grade, subject.id, safeType, difficulty, purpose, topic);
-      const result = await callClaude(prompt, apiKey, 8000);
+      let result = await callClaude(prompt, apiKey, 8000);
+      let parsedResult = parseWorksheet(result);
+      let issues = worksheetWarnings(parsedResult, result);
+      // Retry silently, BEFORE the user ever sees a broken worksheet, reusing
+      // the same prompt (same topic and parameters) so a retry is genuinely
+      // "try this request again," not a different question. Capped at 3 total
+      // attempts; a network failure on a retry keeps the prior attempt rather
+      // than crashing the whole generation.
+      let attempts = 1;
+      while (issues.length && attempts < 3) {
+        attempts++;
+        try {
+          const retryResult = await callClaude(prompt, apiKey, 8000);
+          const retryParsed = parseWorksheet(retryResult);
+          const retryIssues = worksheetWarnings(retryParsed, retryResult);
+          result = retryResult; parsedResult = retryParsed; issues = retryIssues;
+        } catch { break; }
+      }
       setRawText(result);
-      setParsed(parseWorksheet(result));
+      setParsed(parsedResult);
     } catch(e) { setError(e.message||"Something went wrong. Please try again."); }
     setLoading(false);
   };
