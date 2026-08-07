@@ -638,7 +638,8 @@ SELECT-ALL-THAT-APPLY ITEM (required, exactly one such item on this worksheet): 
 - Each correct option must be independently, genuinely true.
 - Each incorrect option must be a plausible near-miss reflecting a real misconception for this skill, not an obviously wrong throwaway. If the skill is equivalence or comparison (like equivalent fractions), a wrong option should look like it could be equivalent but is not, not simply an unrelated number.
 - Before writing the answer key for this item, count how many options you marked correct. If the count is not 2 or 3, revise the options until it is.
-- The answer key must state exactly which letters are correct AND explain why each of the remaining letters is wrong.` : "";
+- The answer key must state exactly which letters are correct AND explain why each of the remaining letters is wrong.
+- Decide the correct letters SILENTLY before writing this entry. Write the final letters exactly ONCE. Never show an earlier guess, never write a different letter combination first and revise it, and never write the word "actually" in this entry. If you find yourself reconsidering while writing, stop, restart the entry from scratch, and write only the final version.` : "";
 
   const sectionText = sec.join("\n\n");
   const keyText = key.join("\n\n");
@@ -995,12 +996,26 @@ function answerKeyWarnings(parsed) {
     if (open && later && open[1] !== later[1]) w.push("Question " + b.num + "'s answer key entry opens with " + open[1] + " but later states the correct answer is " + later[1] + ".");
   });
 
-  // Select-all items should have a genuine mix, not every offered choice correct.
+  // Select-all items should have a genuine mix, not every offered choice
+  // correct, and the answer key should state the final letters exactly once.
+  // Both checks below only count a letter when it is actually tied to "correct"
+  // language, not merely mentioned anywhere (a well-written key legitimately
+  // names every letter while explaining why the wrong ones are wrong).
   keyBlocks.forEach((b) => {
     const q = questions.get(b.num);
     if (!q || !/select[\s-]?all/i.test(q.text || "")) return;
-    const correctLetters = new Set((b.text.match(/\b([A-F])\b(?=[\s,.]|$)/g) || []).map((x) => x.trim()));
-    if (q.choices.length && correctLetters.size >= q.choices.length) w.push("Question " + b.num + " asks to select all that apply, but the key marks every offered choice correct.");
+    const LETLIST = "[A-F]\\b(?:\\s*,?\\s*(?:and\\s+|&\\s*)?[A-F]\\b)*";
+    const letterSetRe = new RegExp("\\b(" + LETLIST + ")\\s+(?:is|are)\\s+(?:all\\s+)?correct\\b|correct\\s+(?:answers?|choices?):?\\s*\\(?(" + LETLIST + ")\\)?|(?:the\\s+)?answers?\\s+(?:is|are)\\s*:?\\s*\\(?(" + LETLIST + ")\\)?", "gi");
+    const orderedSets = [];
+    let m;
+    while ((m = letterSetRe.exec(b.text)) !== null) {
+      const letters = (m[1] || m[2] || m[3] || "").match(/\b[A-F]\b/gi);
+      if (letters) orderedSets.push(letters.map((x) => x.toUpperCase()).sort().join(""));
+    }
+    const distinct = new Set(orderedSets);
+    if (distinct.size > 1) w.push("Question " + b.num + "'s answer key shows more than one different answer set for this select-all question, which usually means visible self-correction survived into the output.");
+    const finalSet = orderedSets[orderedSets.length - 1];
+    if (finalSet && q.choices.length && finalSet.length >= q.choices.length) w.push("Question " + b.num + " asks to select all that apply, but the key marks every offered choice correct.");
   });
 
   return w;
