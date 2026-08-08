@@ -701,6 +701,7 @@ NO DUPLICATION (required): every box, sentence, and example appears exactly ONCE
 
 QUESTION TEXT ACCURACY (required): decide every number, name, and value BEFORE writing a question, not while writing it. Write each question ONCE, cleanly, in its final form. Never write a placeholder, a wrong number, or a partial sentence and then correct it in front of the reader anywhere on the student-facing page, including the Directions, the Support Box, and every question. The words "wait," "let me," "hold on," and "actually" are FORBIDDEN in question text, not only in the answer key.
 - Any answer option or question stem that makes a specific numeric CLAIM (a ratio, "N times as great," a comparison, a sum, an equality) must be computed and verified BEFORE it is written, the same way you verify the answer key. If an option you were about to write turns out to be arithmetically false when you check it, do not write that option and rationalize it afterward: replace it with a number that makes the claim genuinely true, or with a clearly wrong distractor that is not presented as correct. This applies especially to place value "value of this digit compared to that digit" comparison questions, where a false multiplier is a common and avoidable mistake.
+- For any "mystery number" or multi-clue problem where several clues together describe one number (a common Bonus format): pick the real number FIRST, then write clues that truthfully describe it, in that order. Never invent clues independently and hope they agree. Every clue must describe a DIFFERENT place value; two clues may never assign two different digits to the same place. Before finalizing, solve your own clues from scratch and confirm they produce exactly one number with no conflicts.
 
 ANSWER ACCURACY (required):
 - Work every problem yourself BEFORE writing the answer key, and write the key from that work.
@@ -929,6 +930,14 @@ function parseWorksheet(text) {
 // language ("A and C are correct", "correct answers: A, C", "the answer is B"),
 // in the order they appear, normalized (sorted, uppercase, no separators).
 // Shared by the select-all checks and the fraction verifier below.
+// Every round of testing finds new vocabulary the model uses to narrate a
+// mid-generation change of mind: "wait," then "actually," now "re-reading,"
+// "resolving:," "re-examine," "conflict," "corrected interpretation." A single
+// shared list means every scan site updates together instead of drifting.
+function hasHedgeLanguage(text) {
+  return /\b(wait|let me|hold on|actually|re-?reading|re-?examin\w*|corrected interpretation)\b|\bresolving:|\bconflict\b/i.test(text || "");
+}
+
 function keyLetterGroups(text, onlySetClaims) {
   const LETLIST = "[A-F]\\b(?:\\s*,?\\s*(?:and\\s+|&\\s*)?[A-F]\\b)*";
   const individualPattern = "\\b(" + LETLIST + ")\\s*(?:\\([^)]*\\))?\\s+(?:is|are)\\s+(?:all\\s+)?correct\\b";
@@ -1173,7 +1182,7 @@ function answerKeyWarnings(parsed) {
   // prompt rule and cleanAnswerKey both only reliably catch the case where the
   // model restarts with a fresh number. A single entry can still second-guess
   // itself in place.
-  if (/\b(wait|let me|hold on|actually)\b/i.test(key)) w.push("The answer key still contains visible self-correction language ('wait', 'let me', 'hold on', or 'actually').");
+  if (hasHedgeLanguage(key)) w.push("The answer key still contains visible self-correction language.");
 
   // Self-contradiction within one entry: opens with one letter, later states a
   // different one as the actual correct answer.
@@ -1224,11 +1233,11 @@ function worksheetWarnings(parsed, rawText) {
   // digit 7 in the number 472,schleswig Wait — here is the number: 472,319.").
   // Scan every student-facing field, not only the answer key, for the same
   // hedge language.
-  const HEDGE_RE = /\b(wait|let me|hold on|actually)\b/i;
-  if (HEDGE_RE.test(parsed.directions || "")) w.push("The directions contain visible self-correction language, which should never reach the student page.");
-  if (HEDGE_RE.test(parsed.supportBox || "")) w.push("The support box contains visible self-correction language, which should never reach the student page.");
+  if (hasHedgeLanguage(parsed.directions)) w.push("The directions contain visible self-correction language, which should never reach the student page.");
+  if (hasHedgeLanguage(parsed.supportBox)) w.push("The support box contains visible self-correction language, which should never reach the student page.");
+  if (hasHedgeLanguage(parsed.bonus)) w.push("The bonus question contains visible self-correction language, which should never reach the student page.");
   parsed.sections.forEach((sec) => {
-    if (HEDGE_RE.test(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains visible self-correction language, which should never reach the student page.");
+    if (hasHedgeLanguage(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains visible self-correction language, which should never reach the student page.");
   });
   parsed.sections.forEach((sec) => {
     const lines = sec.content.split("\n").map((l) => l.trim());
