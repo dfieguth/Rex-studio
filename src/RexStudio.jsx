@@ -703,6 +703,14 @@ QUESTION TEXT ACCURACY (required): decide every number, name, and value BEFORE w
 - Any answer option or question stem that makes a specific numeric CLAIM (a ratio, "N times as great," a comparison, a sum, an equality) must be computed and verified BEFORE it is written, the same way you verify the answer key. If an option you were about to write turns out to be arithmetically false when you check it, do not write that option and rationalize it afterward: replace it with a number that makes the claim genuinely true, or with a clearly wrong distractor that is not presented as correct. This applies especially to place value "value of this digit compared to that digit" comparison questions, where a false multiplier is a common and avoidable mistake.
 - For any "mystery number" or multi-clue problem where several clues together describe one number (a common Bonus format): pick the real number FIRST, then write clues that truthfully describe it, in that order. Never invent clues independently and hope they agree. Every clue must describe a DIFFERENT place value; two clues may never assign two different digits to the same place. Before finalizing, solve your own clues from scratch and confirm they produce exactly one number with no conflicts.
 
+ITEM SOLVABILITY (required, check BEFORE writing the question, not in the key):
+- For select-all-that-apply items: evaluate all five options for truth FIRST, before writing any of them onto the page. Count the true ones. If the count is not exactly 2 or 3, change the options themselves until it is, then write the item once in its final form. Never write five options and discover afterward that all five are true.
+- For "mystery number" and multi-clue items: pick the actual number FIRST, then write clues that describe it. Never write a clue that multiplies, adds to, or derives one digit from another unless you have computed the result and confirmed it is a single digit from 0 to 9. A clue requiring a digit of 10 or more is unsolvable and must never be written.
+- For any item that asks students to ORDER or COMPARE results: compute the results first and confirm they are actually different. An ordering question whose values all come out equal is a broken item.
+- If you discover mid-writing that an item cannot work, DELETE it and write a different item. Never keep a broken item.
+
+NEVER DELEGATE REPAIRS (required): the worksheet and key you output must be ready to print exactly as written. Never write a note telling the teacher to correct, replace, or substitute anything before use. Never describe an option as needing a corrected version. Never state that a question as printed has a flaw. If an item is flawed, fix the item itself before you output it. A note to the teacher about a broken question is a failed generation, not a solution.
+
 ANSWER ACCURACY (required):
 - Work every problem yourself BEFORE writing the answer key, and write the key from that work.
 - Recheck every calculation. A wrong answer key is worse than a hard worksheet.
@@ -938,6 +946,29 @@ function hasHedgeLanguage(text) {
   return /\b(wait|let me|hold on|actually|re-?reading|re-?examin\w*|corrected interpretation)\b|\bresolving:|:\s*(revising|correcting|resolving|re-?examin\w*)\b/i.test(text || "");
 }
 
+// A categorically different failure from hedge language: the model discovers a
+// genuine construction error in its own question (options that are all true, a
+// clue requiring a digit above 9) and, instead of silently rewriting the item,
+// ships it broken and writes repair instructions to the teacher in the answer
+// key. The worksheet is unusable as printed, so this must never be savable.
+// Structural signal, not a vocabulary list: these are all phrasings that
+// address the teacher as someone who must edit the page before use.
+function hasTeacherRepairInstruction(text) {
+  return /\b(NOTE TO TEACHER|construction error|internal conflict|cannot be satisfied|before (?:distributing|printing)|when administering|administer with|corrected (?:version|distractor|bonus)|teachers? should replace)\b/i.test(text || "");
+}
+
+// A digit-group comma immediately fused to a letter, with no space, is
+// essentially never valid: as a thousands separator a comma is followed by
+// more digits ("4,842"); as ordinary punctuation it's followed by a space
+// ("Maria, who..."). A comma landing directly on a letter is a strong signal
+// of a corrupted or interrupted token (a number the model started, then
+// glitched into unrelated text mid-word), independent of whether visible
+// self-correction narration happens to follow it. This structural check
+// catches that failure mode even when no hedge word ever appears.
+function hasCorruptedNumber(text) {
+  return /\d,[A-Za-z]/.test(text || "");
+}
+
 function keyLetterGroups(text, onlySetClaims) {
   const LETLIST = "[A-F]\\b(?:\\s*,?\\s*(?:and\\s+|&\\s*)?[A-F]\\b)*";
   const individualPattern = "\\b(" + LETLIST + ")\\s*(?:\\([^)]*\\))?\\s+(?:is|are)\\s+(?:all\\s+)?correct\\b";
@@ -1087,6 +1118,51 @@ function contradictionWarnings(parsed) {
 // a target fraction. This catches a transcription mismatch even when no
 // "equal to N/D" phrasing is present for the fraction-equivalence checker to
 // key off of.
+// A word problem that asks students to ORDER or RANK several computed or
+// rounded values only makes sense if the values actually differ. If the
+// model's own key concludes the values are equal/tied, the item has no
+// answer and was never validated before being written, exactly the kind of
+// unsolvable-item defect the prompt now asks the model to catch pre-write.
+// This catches it post-write too, since a prompt rule alone isn't enforcement.
+function degenerateOrderingWarnings(parsed) {
+  const w = [];
+  if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
+  const orderingStem = /\b(order|rank)\b[\s\S]{0,80}\b(greatest to least|least to greatest)\b|\bwhich (?:list|order)\b[\s\S]{0,40}\b(greatest|least)\b/i;
+  const degenerateKey = /\ball (?:three|four|two|of them) (?:are )?(?:equal|the same|tied)\b|\bequal when rounded\b|\bthere is no (?:order|difference)\b|\bare (?:all )?equal\b[\s\S]{0,40}\brounded\b/i;
+  parsed.sections.forEach((sec) => {
+    const lines = sec.content.split("\n");
+    let qNum = null, qText = "";
+    lines.forEach((l) => {
+      const m = l.match(/^(\d+)\.\s+(.*)/);
+      if (m) { qNum = m[1]; qText = m[2]; }
+      else if (qNum) qText += " " + l;
+    });
+    if (!qNum || !orderingStem.test(qText)) return;
+    const blocks = [];
+    let cur = { num: null, text: "" };
+    parsed.answerKey.split("\n").forEach((l) => {
+      const bm = l.match(/^\s*(\d+)[.)]\s/);
+      if (bm) { if (cur.num) blocks.push(cur); cur = { num: bm[1], text: l }; }
+      else cur.text += "\n" + l;
+    });
+    if (cur.num) blocks.push(cur);
+    const match = blocks.find((b) => b.num === qNum);
+    if (match && degenerateKey.test(match.text)) {
+      w.push("Question " + qNum + " asks students to order or rank values, but the answer key says the values are equal. The item has no real answer and needs different numbers, not a tie.");
+    }
+  });
+  return w;
+}
+
+// Visible mid-key backtracking doesn't require a forbidden word. A key can
+// compute a wrong or messy operation, state the result doesn't work cleanly,
+// then pivot to the real answer, all in ordinary prose ("... is not a
+// whole-number comparison ... so a precise answer is ..."). This is the same
+// failure as hasHedgeLanguage catches, just phrased without "wait/actually."
+function hasMessyReasoning(text) {
+  return /\bis not a whole[\s-]number\b|\bso a precise\b|\bthis (?:is not|violates|breaks)\b|\bexceeds a single digit\b/i.test(text || "");
+}
+
 function optionTranscriptionWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
@@ -1246,9 +1322,16 @@ function worksheetWarnings(parsed, rawText) {
   if (hasHedgeLanguage(parsed.directions)) w.push("The directions contain visible self-correction language, which should never reach the student page.");
   if (hasHedgeLanguage(parsed.supportBox)) w.push("The support box contains visible self-correction language, which should never reach the student page.");
   if (hasHedgeLanguage(parsed.bonus)) w.push("The bonus question contains visible self-correction language, which should never reach the student page.");
+  if (hasCorruptedNumber(parsed.directions)) w.push("The directions contain a corrupted number (a digit fused directly to letters), which usually means a generation glitch.");
+  if (hasCorruptedNumber(parsed.supportBox)) w.push("The support box contains a corrupted number (a digit fused directly to letters), which usually means a generation glitch.");
+  if (hasCorruptedNumber(parsed.bonus)) w.push("The bonus question contains a corrupted number (a digit fused directly to letters), which usually means a generation glitch.");
   parsed.sections.forEach((sec) => {
     if (hasHedgeLanguage(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains visible self-correction language, which should never reach the student page.");
+    if (hasCorruptedNumber(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains a corrupted number (a digit fused directly to letters), which usually means a generation glitch.");
   });
+  if (hasCorruptedNumber(parsed.answerKey)) w.push("The answer key contains a corrupted number (a digit fused directly to letters), which usually means a generation glitch.");
+  if (hasTeacherRepairInstruction(parsed.answerKey) || hasTeacherRepairInstruction(parsed.teacherNotes)) w.push("The answer key admits a question is built wrong and tells you to fix it before printing. The item needs regenerating, not patching.");
+  if (hasMessyReasoning(parsed.answerKey)) w.push("The answer key visibly computes a wrong or messy result before landing on the real answer, without using a forbidden self-correction word. This should never reach the printed key.");
   // Question numbers must be unique across the whole worksheet. When the
   // model restarts numbering per section (1, 2 in Vocabulary, then 1, 2
   // again in Comprehension), the answer key mirrors it, and cleanAnswerKey's
@@ -1294,7 +1377,7 @@ function worksheetWarnings(parsed, rawText) {
       if (qNum) flushGroup();
     }
   });
-  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed));
+  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed)).concat(degenerateOrderingWarnings(parsed));
 }
 
 function renderSectionHTML(sec) {
