@@ -810,10 +810,10 @@ function parseWorksheet(text) {
   // Step 2: Clean out any instruction artifacts
   if (passage) {
     passage = passage
-      .replace(/CRITICAL:.*?\n/gi, "")
-      .replace(/RULE:.*?\n/gi, "")
-      .replace(/IMPORTANT:.*?\n/gi, "")
-      .replace(/Write your original passage.*?\n/gi, "")
+      .replace(/^\s*CRITICAL:[^\n]*\n?/gim, "")
+      .replace(/^\s*RULE:[^\n]*\n?/gim, "")
+      .replace(/^\s*IMPORTANT:[^\n]*\n?/gim, "")
+      .replace(/^\s*Write your original passage[^\n]*\n?/gim, "")
       .replace(/\(replace this.*?\)/gi, "")
       .replace(/\(Write.*?\)/gi, "")
       .trim();
@@ -935,7 +935,7 @@ function parseWorksheet(text) {
 // "resolving:," "re-examine," "conflict," "corrected interpretation." A single
 // shared list means every scan site updates together instead of drifting.
 function hasHedgeLanguage(text) {
-  return /\b(wait|let me|hold on|actually|re-?reading|re-?examin\w*|corrected interpretation)\b|\bresolving:|\bconflict\b/i.test(text || "");
+  return /\b(wait|let me|hold on|actually|re-?reading|re-?examin\w*|corrected interpretation)\b|\bresolving:|:\s*(revising|correcting|resolving|re-?examin\w*)\b/i.test(text || "");
 }
 
 function keyLetterGroups(text, onlySetClaims) {
@@ -1174,6 +1174,10 @@ function answerKeyWarnings(parsed) {
     const declared = (scoring.content.match(/out of\s+(\d+)/i) || [])[1];
     let summed = 0;
     parsed.sections.forEach((sec) => {
+      // The scoring section commonly restates per-item values ("multiple
+      // choice items are worth (2 points) each"); counting those into the
+      // item total double-counts and false-flags a correct assessment.
+      if (/scoring/i.test(sec.heading)) return;
       (sec.content.match(/\((\d+)\s*points?\)/gi) || []).forEach((x) => { summed += parseInt(x.match(/\d+/)[0]); });
     });
     if (declared && summed && parseInt(declared) !== summed) w.push("Point total does not add up: the scoring line says " + declared + " but the items total " + summed + ".");
@@ -1197,7 +1201,13 @@ function answerKeyWarnings(parsed) {
   }
   keyBlocks.forEach((b) => {
     const open = b.text.match(/^\s*\d+[.)]\s*\(?([A-F])\b/);
-    const later = b.text.match(/correct answer is\s*\(?([A-F])\b/i);
+    // A legitimate explanation can mention "the correct answer is X" while
+    // discussing why a tempting wrong choice is incorrect, before confirming
+    // the real answer. Genuine self-correction narrates in the same order
+    // (explain, then settle), so the LAST such phrase in the entry is the
+    // one that actually matters, not the first.
+    const laterMatches = [...b.text.matchAll(/correct answer is\s*\(?([A-F])\b/gi)];
+    const later = laterMatches.length ? laterMatches[laterMatches.length - 1] : null;
     if (open && later && open[1] !== later[1]) w.push("Question " + b.num + "'s answer key entry opens with " + open[1] + " but later states the correct answer is " + later[1] + ".");
   });
 
@@ -1239,6 +1249,27 @@ function worksheetWarnings(parsed, rawText) {
   parsed.sections.forEach((sec) => {
     if (hasHedgeLanguage(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains visible self-correction language, which should never reach the student page.");
   });
+  // Question numbers must be unique across the whole worksheet. When the
+  // model restarts numbering per section (1, 2 in Vocabulary, then 1, 2
+  // again in Comprehension), the answer key mirrors it, and cleanAnswerKey's
+  // duplicate-number dedup (built for self-correction restarts) then keeps
+  // only the LAST section's answers, silently deleting the rest and pairing
+  // the wrong heading with the wrong answers. Detecting the restart here
+  // turns a silent mangled key into a retry.
+  {
+    const seenNums = new Map();
+    const dupNums = new Set();
+    parsed.sections.forEach((sec) => {
+      if (/scoring/i.test(sec.heading)) return;
+      sec.content.split("\n").forEach((l) => {
+        const m = l.trim().match(/^(\d+)[.)]\s/);
+        if (!m) return;
+        if (seenNums.has(m[1])) dupNums.add(m[1]);
+        else seenNums.set(m[1], sec.heading);
+      });
+    });
+    if (dupNums.size) w.push("Question number" + (dupNums.size > 1 ? "s " : " ") + [...dupNums].join(", ") + " appear" + (dupNums.size > 1 ? "" : "s") + " more than once on the worksheet. Numbering restarted instead of continuing across sections, which scrambles the answer key.");
+  }
   parsed.sections.forEach((sec) => {
     const lines = sec.content.split("\n").map((l) => l.trim());
     const qs = lines.filter((l) => /^\d+\.\s*/.test(l));
@@ -1275,7 +1306,12 @@ function renderSectionHTML(sec) {
     .trim();
   const lines = cleanContent.split("\n");
   const isQ = (s) => /^\d+\.\s+/.test(s);
-  const proseHTML = (t) => `<p style="font-size:13px;color:#374151;margin:4px 0;white-space:pre-wrap;">${t}</p>`;
+  // Generated content goes into raw HTML strings here (this path renders via
+  // dangerouslySetInnerHTML). HTML5 parsing forgives most bare symbols, but a
+  // "<" tight against a letter (like "a<b") starts a tag and silently swallows
+  // the rest of the line. Escaping content at insertion closes that entirely.
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const proseHTML = (t) => `<p style="font-size:13px;color:#374151;margin:4px 0;white-space:pre-wrap;">${esc(t)}</p>`;
   const lineHTML = `<div style="border-bottom:1.5px solid #CBD5E1;height:28px;margin-bottom:4px;"></div>`;
   let html = "";
   let i = 0;
@@ -1285,13 +1321,13 @@ function renderSectionHTML(sec) {
     const qMatch = line.match(/^(\d+)\.\s+(.+)/);
     if (qMatch) {
       const qNum = qMatch[1], qText = qMatch[2];
-      html += `<div style="margin-bottom:16px;display:flex;gap:10px;"><span style="font-weight:700;color:#374151;min-width:22px;font-size:14px;">${qNum}.</span><div style="flex:1;"><p style="margin:0 0 8px 0;font-size:14px;line-height:1.6;color:#1e293b;font-weight:500;">${qText}</p>`;
+      html += `<div style="margin-bottom:16px;display:flex;gap:10px;"><span style="font-weight:700;color:#374151;min-width:22px;font-size:14px;">${qNum}.</span><div style="flex:1;"><p style="margin:0 0 8px 0;font-size:14px;line-height:1.6;color:#1e293b;font-weight:500;">${esc(qText)}</p>`;
       if (sec.type === "multiple_choice") {
         let j = i + 1;
         while (j < lines.length && !isQ(lines[j].trim())) {
           const l = lines[j].trim();
           if (/^[A-F]\./.test(l)) {
-            html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #CBD5E1;flex-shrink:0;"></div><span style="font-size:13px;color:#374151;">${l}</span></div>`;
+            html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #CBD5E1;flex-shrink:0;"></div><span style="font-size:13px;color:#374151;">${esc(l)}</span></div>`;
           } else if (l) {
             html += proseHTML(l);
           }
@@ -1333,7 +1369,7 @@ function renderSectionHTML(sec) {
       if (!line.startsWith("[") && !/^TYPE:/i.test(line)) {
         html += line.startsWith("___")
           ? lineHTML
-          : `<p style="font-size:14px;color:#1e293b;font-weight:600;margin:4px 0;">${line}</p>`;
+          : `<p style="font-size:14px;color:#1e293b;font-weight:600;margin:4px 0;">${esc(line)}</p>`;
       }
       i++;
     }
