@@ -982,6 +982,17 @@ function hasTeacherRepairInstruction(text) {
   return /\b(NOTE TO TEACHER|construction error|internal conflict|cannot be satisfied|before (?:distributing|printing)|when administering|administer with|corrected (?:version|distractor|bonus)|teachers? should replace)\b/i.test(text || "");
 }
 
+// A step further than hasTeacherRepairInstruction: this isn't the model
+// admitting a flaw and pushing the fix onto the teacher, it's the model
+// announcing it silently rewrote the item's own content mid-generation and
+// only the new version was meant to be shown. That announcement, when it
+// survives into the output at all, is proof the printed page and the key no
+// longer describe the same question, regardless of whether the specific
+// rewritten wording also gets caught elsewhere.
+function hasItemContentTamperingLanguage(text) {
+  return /\bCORRECTION APPLIED\b|\bitem revised\b|\bmust be changed to a\s+(?:true|false|correct|incorrect)\s+(?:statement|option|distractor|answer)\b|\bonly (?:the )?final version appears\b|\brevised (?:on|to|before) (?:the )?(?:student page|output|print)\b/i.test(text || "");
+}
+
 // A digit-group comma immediately fused to a letter, with no space, is
 // essentially never valid: as a thousands separator a comma is followed by
 // more digits ("4,842"); as ordinary punctuation it's followed by a space
@@ -1204,7 +1215,13 @@ function keyInventedOptionTextWarnings(parsed) {
     const blocks = numberedKeyBlocks(parsed.answerKey);
     const match = blocks.find((b) => b.num === qNum);
     if (!match) return;
-    const inventRe = /\bfor\s+([A-F])\b[^"“”]{0,50}[:]\s*["“]([^"”]{4,150})["”]/gi;
+    // Not restricted to "for LETTER" phrasing anymore: a generation caught
+    // rewriting an option can say "E reads:", "for E instead reads:", "the
+    // corrected version of D says:", or something not seen yet. All of them
+    // share one shape: a letter, then shortly after, a colon and a quoted
+    // string. Keeping the letter-to-colon gap tight (40 chars) is what keeps
+    // this from drifting onto an unrelated colon elsewhere in the entry.
+    const inventRe = /\b([A-F])\b[^"“”\n]{0,40}[:]\s*["“]([^"”]{4,150})["”]/g;
     let m;
     while ((m = inventRe.exec(match.text)) !== null) {
       const letter = m[1];
@@ -1480,6 +1497,7 @@ function worksheetWarnings(parsed, rawText) {
   });
   if (hasCorruptedNumber(parsed.answerKey)) w.push("The answer key contains a corrupted number (a digit fused directly to letters), which usually means a generation glitch.");
   if (hasTeacherRepairInstruction(parsed.answerKey) || hasTeacherRepairInstruction(parsed.teacherNotes)) w.push("The answer key admits a question is built wrong and tells you to fix it before printing. The item needs regenerating, not patching.");
+  if (hasItemContentTamperingLanguage(parsed.answerKey)) w.push("The answer key announces it rewrote an option's content mid-generation. Whatever the printed page still says, the key is no longer describing it.");
   if (hasMessyReasoning(parsed.answerKey)) w.push("The answer key visibly computes a wrong or messy result before landing on the real answer, without using a forbidden self-correction word. This should never reach the printed key.");
   // Question numbers must be unique across the whole worksheet. When the
   // model restarts numbering per section (1, 2 in Vocabulary, then 1, 2
