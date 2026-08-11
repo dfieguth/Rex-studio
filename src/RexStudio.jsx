@@ -1163,6 +1163,52 @@ function contradictionWarnings(parsed) {
 // the key is confident and clean, with no self-correction language at all,
 // because cleanAnswerKey's dedup can (correctly, for its own purpose) delete
 // the very block that contained the only visible hint something went wrong.
+// The select-all version of the same bug answerValueMismatchWarnings catches
+// for single-answer questions. Here the key doesn't silently answer a
+// different question (keyMatchesQuestionWarnings) and doesn't claim a single
+// letter's value (answerValueMismatchWarnings deliberately skips multi-letter
+// answers to avoid false-firing on legitimate select-all). Instead it does
+// something more specific: it explicitly quotes an alternate version of one
+// option's text ('the printed question uses the following version for D:
+// "..."', 'the printed question for E instead reads: "..."') and reasons
+// about THAT invented text instead of what's actually on the page. The
+// wording varies, but the shape is constant: a reference to a specific
+// letter, followed eventually by a colon and a quoted alternate option text.
+// That structure is what this checks, not the surrounding phrasing, so it
+// isn't tied to "let me" or "wait" or any other word that could be absent.
+function keyInventedOptionTextWarnings(parsed) {
+  const w = [];
+  if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
+  const norm = (s) => s.toLowerCase().replace(/[.,!?"'"'"]/g, "").replace(/\s+/g, " ").trim();
+  parsed.sections.forEach((sec) => {
+    if (sec.type !== "multiple_choice") return;
+    const lines = sec.content.split("\n");
+    let qNum = null;
+    const printedOptions = {};
+    lines.forEach((l) => {
+      const qm = l.trim().match(/^(\d+)\.\s/);
+      if (qm) { qNum = qm[1]; return; }
+      const om = l.trim().match(/^([A-F])\.\s*(.+)/);
+      if (om && qNum) printedOptions[qNum + om[1]] = om[2];
+    });
+    if (!qNum) return;
+    const blocks = numberedKeyBlocks(parsed.answerKey);
+    const match = blocks.find((b) => b.num === qNum);
+    if (!match) return;
+    const inventRe = /\bfor\s+([A-F])\b[^"“”]{0,50}[:]\s*["“]([^"”]{4,150})["”]/gi;
+    let m;
+    while ((m = inventRe.exec(match.text)) !== null) {
+      const letter = m[1];
+      const invented = m[2];
+      const printedText = printedOptions[qNum + letter];
+      if (!printedText) continue;
+      if (norm(invented) === norm(printedText)) continue;
+      w.push("Question " + qNum + "'s key claims option " + letter + " reads \"" + invented.trim() + "\", but option " + letter + " as printed on the page actually says \"" + printedText.trim() + "\". If the key needs different option text, the printed page has to change, not just the key's description of it.");
+    }
+  });
+  return w;
+}
+
 function answerValueMismatchWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
@@ -1471,7 +1517,7 @@ function worksheetWarnings(parsed, rawText) {
       if (qNum) flushGroup();
     }
   });
-  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed)).concat(degenerateOrderingWarnings(parsed)).concat(keyMatchesQuestionWarnings(parsed)).concat(answerValueMismatchWarnings(parsed));
+  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed)).concat(degenerateOrderingWarnings(parsed)).concat(keyMatchesQuestionWarnings(parsed)).concat(answerValueMismatchWarnings(parsed)).concat(keyInventedOptionTextWarnings(parsed));
 }
 
 function renderSectionHTML(sec) {
