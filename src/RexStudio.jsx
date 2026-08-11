@@ -1116,8 +1116,17 @@ function contradictionWarnings(parsed) {
       const letterMatch = chunk.match(/\b([A-F])\b/);
       if (!letterMatch) return;
       const letter = letterMatch[1].toUpperCase();
-      const isNeg = /\b(?:is|are)\s+(?:not\s+correct|incorrect|wrong)\b/i.test(chunk);
-      const isPos = /\b(?:is|are)\s+correct\b/i.test(chunk);
+      // Two verdict formats show up across generations: prose ("B is
+      // incorrect") and a short declared marker right after the letter
+      // ("B — INCORRECT.", "B: TRUE.", "B. FALSE"). The declared form is
+      // actually the more common one in practice, so it needs its own check
+      // rather than folding it loosely into the prose pattern, which risks
+      // either missing it (too narrow) or matching unrelated text elsewhere
+      // in the chunk (too broad). Anchoring it to right after THIS letter
+      // keeps it precise either way.
+      const declared = chunk.match(new RegExp("\\b" + letter + "\\s*[—\\-:.]{1,2}\\s*(CORRECT|INCORRECT|TRUE|FALSE|WRONG)\\b"));
+      const isNeg = /\b(?:is|are)\s+(?:not\s+correct|incorrect|wrong)\b/i.test(chunk) || (declared && /^(INCORRECT|FALSE|WRONG)$/.test(declared[1]));
+      const isPos = /\b(?:is|are)\s+correct\b/i.test(chunk) || (declared && /^(CORRECT|TRUE)$/.test(declared[1]));
       if (isNeg) (verdicts[letter] = verdicts[letter] || new Set()).add("incorrect");
       if (isPos) (verdicts[letter] = verdicts[letter] || new Set()).add("correct");
     });
