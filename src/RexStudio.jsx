@@ -807,6 +807,29 @@ function answerKeyBlocks(text) {
   return blocks;
 }
 
+// Shared by every check below that needs "the key text for question N."
+// Splits on a fresh numbered line (a new block) the same way the six
+// call sites used to do inline, but ALSO treats heading-style lines
+// ("Bonus:", "Scoring Guide:", etc., same test as answerKeyBlocks above) as a
+// boundary that closes the current numbered block without opening a new
+// numbered one. Without this, trailing prose like "Bonus: ..." has nothing
+// to stop it from being silently appended onto whatever numbered question
+// came right before it, which then makes every check below attribute the
+// Bonus section's problems to that question instead.
+function numberedKeyBlocks(text) {
+  const blocks = [];
+  let cur = { num: null, text: "" };
+  (text || "").split("\n").forEach((l) => {
+    const itemMatch = l.match(/^\s*(\d+)[.)]\s/);
+    const isHeading = /^[A-Z][^\n]{0,60}:\s*$/.test(l.trim()) || /^(Bonus|Proficiency Guide|Scoring Rubric|Scoring Guide)\b/i.test(l.trim());
+    if (itemMatch) { if (cur.num) blocks.push(cur); cur = { num: itemMatch[1], text: l }; }
+    else if (isHeading) { if (cur.num) blocks.push(cur); cur = { num: null, text: "" }; }
+    else if (cur.num) cur.text += "\n" + l;
+  });
+  if (cur.num) blocks.push(cur);
+  return blocks;
+}
+
 function parseWorksheet(text) {
   const get = (tag) => {
     const re = new RegExp(`\\[${tag}\\][^\\n]*\\n([\\s\\S]*?)(?=\\n\\[(?:TITLE|SUBTITLE|DIRECTIONS|SUPPORT BOX|PASSAGE|SECTION|BONUS|ANSWER|TEACHER)|$)`, "i");
@@ -1084,14 +1107,7 @@ function decimalFractionEquivalenceWarnings(parsed) {
 function contradictionWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey) return w;
-  const blocks = [];
-  let cur = { num: null, text: "" };
-  parsed.answerKey.split("\n").forEach((l) => {
-    const m = l.match(/^\s*(\d+)[.)]\s/);
-    if (m) { if (cur.num) blocks.push(cur); cur = { num: m[1], text: l }; }
-    else cur.text += "\n" + l;
-  });
-  if (cur.num) blocks.push(cur);
+  const blocks = numberedKeyBlocks(parsed.answerKey);
 
   blocks.forEach((b) => {
     const chunks = b.text.split(/(?<=[.!?])\s+|\n+/);
@@ -1136,6 +1152,64 @@ function contradictionWarnings(parsed) {
 // printed in that question's stem and options. This is intentionally
 // conservative: it only fires when the ending is completely disconnected
 // from the page, not on every mid-entry aside that mentions another number.
+// The gap the last round's Q3 case exposed: keyMatchesQuestionWarnings only
+// checks large comma-formatted numbers (so a large-number question drifting
+// to a wrong large number gets caught), but a question comparing small counts
+// ("10 times greater" vs "5 times greater") uses numbers with no comma, which
+// that check ignores entirely. This one is narrower and complementary: it
+// looks specifically at the letter the key marks correct and the short value
+// phrase right next to it, and checks that phrase's numbers actually appear
+// in what that letter's option says on the printed page. It fires even when
+// the key is confident and clean, with no self-correction language at all,
+// because cleanAnswerKey's dedup can (correctly, for its own purpose) delete
+// the very block that contained the only visible hint something went wrong.
+function answerValueMismatchWarnings(parsed) {
+  const w = [];
+  if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
+  const numToks = (s) => new Set((s.match(/\b\d[\d,]*\b/g) || []).filter((n) => n.replace(/,/g, "").length > 0));
+  parsed.sections.forEach((sec) => {
+    if (sec.type !== "multiple_choice") return;
+    const lines = sec.content.split("\n");
+    let qNum = null;
+    const printedOptions = {};
+    lines.forEach((l) => {
+      const qm = l.trim().match(/^(\d+)\.\s/);
+      if (qm) { qNum = qm[1]; return; }
+      const om = l.trim().match(/^([A-F])\.\s*(.+)/);
+      if (om && qNum) printedOptions[qNum + om[1]] = om[2];
+    });
+    if (!qNum) return;
+    const blocks = numberedKeyBlocks(parsed.answerKey);
+    const match = blocks.find((b) => b.num === qNum);
+    if (!match) return;
+    const open = match.text.match(/^\s*\d+[.)]\s*\(?([A-F])\)?/);
+    if (!open) return;
+    // A select-all answer opens the same way ("6. A, B, C —") but the letter
+    // isn't claiming a single value at all, it's the first of a list. This
+    // check only makes sense for a single-answer question, so skip anything
+    // where the opening letter is immediately followed by a second letter
+    // (", B" or " and B") rather than its own explanation.
+    if (/^[,\s]*(and\s+)?[A-F]\b/.test(match.text.slice(open.index + open[0].length, open.index + open[0].length + 6))) return;
+    const letter = open[1];
+    const printedText = printedOptions[qNum + letter];
+    if (!printedText) return;
+    const afterOpen = match.text.slice(open.index + open[0].length, open.index + open[0].length + 100);
+    // Stop before the next lettered clause ("B (10 times)", "C. 100...") so a
+    // wide window doesn't accidentally borrow a number from the explanation
+    // of a DIFFERENT option and create a false overlap that hides the bug.
+    const nextLetterAt = afterOpen.search(/\s[B-F]\s*[.):(]/);
+    const nearby = nextLetterAt >= 0 ? afterOpen.slice(0, nextLetterAt) : afterOpen;
+    const claimedNums = numToks(nearby);
+    const printedNums = numToks(printedText);
+    if (!claimedNums.size || !printedNums.size) return;
+    const overlaps = [...claimedNums].some((n) => printedNums.has(n));
+    if (!overlaps) {
+      w.push("Question " + qNum + "'s key marks " + letter + " correct and states " + [...claimedNums].join("/") + ", but option " + letter + " as printed on the page says \"" + printedText.trim() + "\". The key's own answer doesn't match what that letter actually says.");
+    }
+  });
+  return w;
+}
+
 function keyMatchesQuestionWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
@@ -1152,14 +1226,7 @@ function keyMatchesQuestionWarnings(parsed) {
     if (!qNum) return;
     const printedNums = new Set((qText.match(bigNum) || []));
     if (!printedNums.size) return;
-    const blocks = [];
-    let cur = { num: null, text: "" };
-    parsed.answerKey.split("\n").forEach((l) => {
-      const bm = l.match(/^\s*(\d+)[.)]\s/);
-      if (bm) { if (cur.num) blocks.push(cur); cur = { num: bm[1], text: l }; }
-      else cur.text += "\n" + l;
-    });
-    if (cur.num) blocks.push(cur);
+    const blocks = numberedKeyBlocks(parsed.answerKey);
     const match = blocks.find((b) => b.num === qNum);
     if (!match) return;
     const tail = match.text.slice(-260);
@@ -1187,14 +1254,7 @@ function degenerateOrderingWarnings(parsed) {
       else if (qNum) qText += " " + l;
     });
     if (!qNum || !orderingStem.test(qText)) return;
-    const blocks = [];
-    let cur = { num: null, text: "" };
-    parsed.answerKey.split("\n").forEach((l) => {
-      const bm = l.match(/^\s*(\d+)[.)]\s/);
-      if (bm) { if (cur.num) blocks.push(cur); cur = { num: bm[1], text: l }; }
-      else cur.text += "\n" + l;
-    });
-    if (cur.num) blocks.push(cur);
+    const blocks = numberedKeyBlocks(parsed.answerKey);
     const match = blocks.find((b) => b.num === qNum);
     if (match && degenerateKey.test(match.text)) {
       w.push("Question " + qNum + " asks students to order or rank values, but the answer key says the values are equal. The item has no real answer and needs different numbers, not a tie.");
@@ -1226,14 +1286,7 @@ function optionTranscriptionWarnings(parsed) {
       const om = l.match(/^([A-F])\.\s*(\d+)\s*\/\s*(\d+)\b/);
       if (om && qNum) realOptions[qNum + om[1]] = { n: parseInt(om[2]), d: parseInt(om[3]) };
     });
-    const blocks = [];
-    let cur = { num: null, text: "" };
-    parsed.answerKey.split("\n").forEach((l) => {
-      const m = l.match(/^\s*(\d+)[.)]\s/);
-      if (m) { if (cur.num) blocks.push(cur); cur = { num: m[1], text: l }; }
-      else cur.text += "\n" + l;
-    });
-    if (cur.num) blocks.push(cur);
+    const blocks = numberedKeyBlocks(parsed.answerKey);
     blocks.forEach((b) => {
       const re = /\b([A-F])\s*\((\d+)\s*\/\s*(\d+)\)/g;
       let m;
@@ -1315,15 +1368,7 @@ function answerKeyWarnings(parsed) {
 
   // Self-contradiction within one entry: opens with one letter, later states a
   // different one as the actual correct answer.
-  const keyBlocks = [];
-  { let cur = { num: null, text: "" };
-    key.split("\n").forEach((l) => {
-      const m = l.match(/^\s*(\d+)[.)]\s/);
-      if (m) { if (cur.num) keyBlocks.push(cur); cur = { num: m[1], text: l }; }
-      else cur.text += "\n" + l;
-    });
-    if (cur.num) keyBlocks.push(cur);
-  }
+  const keyBlocks = numberedKeyBlocks(key);
   keyBlocks.forEach((b) => {
     const open = b.text.match(/^\s*\d+[.)]\s*\(?([A-F])\b/);
     // A legitimate explanation can mention "the correct answer is X" while
@@ -1426,7 +1471,7 @@ function worksheetWarnings(parsed, rawText) {
       if (qNum) flushGroup();
     }
   });
-  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed)).concat(degenerateOrderingWarnings(parsed)).concat(keyMatchesQuestionWarnings(parsed));
+  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed)).concat(degenerateOrderingWarnings(parsed)).concat(keyMatchesQuestionWarnings(parsed)).concat(answerValueMismatchWarnings(parsed));
 }
 
 function renderSectionHTML(sec) {
