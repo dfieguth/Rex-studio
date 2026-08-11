@@ -711,6 +711,8 @@ ITEM SOLVABILITY (required, check BEFORE writing the question, not in the key):
 
 NEVER DELEGATE REPAIRS (required): the worksheet and key you output must be ready to print exactly as written. Never write a note telling the teacher to correct, replace, or substitute anything before use. Never describe an option as needing a corrected version. Never state that a question as printed has a flaw. If an item is flawed, fix the item itself before you output it. A note to the teacher about a broken question is a failed generation, not a solution.
 
+THE KEY MUST MATCH THE PAGE (required): if while writing the answer key you discover a question has no valid single answer, do not keep writing about it. Stop, go back, and rewrite the question stem and all of its options on the page itself, choosing numbers that make the item solvable. Then write a key for that new version. Never leave the printed question and options unchanged while your key discussion drifts onto different numbers, a different digit, or a different comparison than what is actually printed. The key's numbers, options, and the value it names as correct must all be numbers that genuinely appear in the printed question. If they don't match, you have answered a question that does not exist on the page, and the worksheet is unusable no matter how correct the key's own math is.
+
 ANSWER ACCURACY (required):
 - Work every problem yourself BEFORE writing the answer key, and write the key from that work.
 - Recheck every calculation. A wrong answer key is worse than a hard worksheet.
@@ -1124,6 +1126,53 @@ function contradictionWarnings(parsed) {
 // answer and was never validated before being written, exactly the kind of
 // unsolvable-item defect the prompt now asks the model to catch pre-write.
 // This catches it post-write too, since a prompt rule alone isn't enforcement.
+// The most severe failure this session: the key drifts entirely off the
+// printed question, discussing different numbers and options than what's on
+// the page, and states a "final" answer that matches nothing a student could
+// have selected. Detecting this precisely is hard, since the messy middle of
+// a spiral often still mentions the original numbers before drifting away, so
+// this checks only the LAST substantial stretch of each key entry (where a
+// "final answer" declaration actually lives) against the numbers genuinely
+// printed in that question's stem and options. This is intentionally
+// conservative: it only fires when the ending is completely disconnected
+// from the page, not on every mid-entry aside that mentions another number.
+function keyMatchesQuestionWarnings(parsed) {
+  const w = [];
+  if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
+  const bigNum = /\b\d{1,3}(?:,\d{3})+\b/g;
+  parsed.sections.forEach((sec) => {
+    if (sec.type !== "multiple_choice") return;
+    const lines = sec.content.split("\n");
+    let qNum = null, qText = "";
+    lines.forEach((l) => {
+      const m = l.match(/^(\d+)\.\s+(.*)/);
+      if (m) { qNum = m[1]; qText = l; }
+      else if (qNum) qText += "\n" + l;
+    });
+    if (!qNum) return;
+    const printedNums = new Set((qText.match(bigNum) || []));
+    if (!printedNums.size) return;
+    const blocks = [];
+    let cur = { num: null, text: "" };
+    parsed.answerKey.split("\n").forEach((l) => {
+      const bm = l.match(/^\s*(\d+)[.)]\s/);
+      if (bm) { if (cur.num) blocks.push(cur); cur = { num: bm[1], text: l }; }
+      else cur.text += "\n" + l;
+    });
+    if (cur.num) blocks.push(cur);
+    const match = blocks.find((b) => b.num === qNum);
+    if (!match) return;
+    const tail = match.text.slice(-260);
+    const tailNums = new Set((tail.match(bigNum) || []));
+    if (!tailNums.size) return;
+    const overlaps = [...tailNums].some((n) => printedNums.has(n));
+    if (!overlaps) {
+      w.push("Question " + qNum + "'s answer key ends by discussing numbers (" + [...tailNums].join(", ") + ") that never appear in the printed question, which asks about (" + [...printedNums].join(", ") + "). The key is answering a different question than what's on the page.");
+    }
+  });
+  return w;
+}
+
 function degenerateOrderingWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
@@ -1377,7 +1426,7 @@ function worksheetWarnings(parsed, rawText) {
       if (qNum) flushGroup();
     }
   });
-  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed)).concat(degenerateOrderingWarnings(parsed));
+  return w.concat(answerKeyWarnings(parsed)).concat(fractionEquivalenceWarnings(parsed)).concat(decimalFractionEquivalenceWarnings(parsed)).concat(contradictionWarnings(parsed)).concat(optionTranscriptionWarnings(parsed)).concat(degenerateOrderingWarnings(parsed)).concat(keyMatchesQuestionWarnings(parsed));
 }
 
 function renderSectionHTML(sec) {
