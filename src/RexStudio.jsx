@@ -1693,7 +1693,50 @@ async function saveWorksheetPdf(parsed, subject, grade) {
   }
 }
 
-function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
+// ─── IN-PLACE EDIT ──────────────────────────────────────────────────────────
+// Lets a single broken field (an answer key entry, a section's question/option
+// text) get corrected in place instead of a full regeneration. Always renders
+// the live content from `parsed` first, then the edit controls underneath -
+// so print and PDF export (which snapshots the DOM directly, not via
+// @media print) never go blank if someone edits mid-export and never shows a
+// leftover unsaved draft. The controls themselves are wrapped in
+// "rex-edit-ui", which the stylesheet hides both under @media print and under
+// the "rex-pdf-export" class the html2canvas export toggles on .rex-print-area.
+function EditableBlock({ value, onSave, rows = 4, renderView, dark = false }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const editBtnCls = dark
+    ? "inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-white transition-all"
+    : "inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-slate-600 transition-all";
+  const cancelBtnCls = dark
+    ? "px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-600 text-slate-300 hover:border-slate-400 transition-all"
+    : "px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-500 hover:border-slate-300 transition-all";
+  return (
+    <div>
+      {renderView}
+      <div className="rex-edit-ui mt-1.5">
+        {editing ? (
+          <div className="space-y-2">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={rows}
+              className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-800 text-sm font-mono text-slate-800 focus:outline-none bg-white leading-relaxed"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => { onSave(draft); setEditing(false); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-white hover:bg-slate-700 transition-all"><Check size={11}/> Save</button>
+              <button onClick={() => { setDraft(value); setEditing(false); }} className={cancelBtnCls}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => { setDraft(value); setEditing(true); }} className={editBtnCls}><PenTool size={11}/> Edit</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PrintableView({ parsed, subject, grade, showKey, onToggleKey, onUpdateSection, onUpdateField }) {
   const hc = subject.hc;
   const gradeLabel = gradeOrdinal(grade);
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -1735,7 +1778,12 @@ function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
             {parsed.sections.map((sec,si)=>(
               <div key={si}>
                 <div className="flex items-center gap-3 mb-4"><div className="h-px flex-1 bg-slate-100"/><h2 style={{color:hc}} className="text-xs font-extrabold uppercase tracking-widest px-2">{sec.heading}</h2><div className="h-px flex-1 bg-slate-100"/></div>
-                <div dangerouslySetInnerHTML={{__html:renderSectionHTML(sec)}}/>
+                <EditableBlock
+                  value={sec.content}
+                  rows={Math.min(24, Math.max(6, sec.content.split("\n").length + 2))}
+                  onSave={(newVal) => onUpdateSection && onUpdateSection(si, newVal)}
+                  renderView={<div dangerouslySetInnerHTML={{__html:renderSectionHTML(sec)}}/>}
+                />
               </div>
             ))}
             {parsed.bonus&&(<div style={{background:`${hc}0d`,border:`1.5px solid ${hc}30`}} className="rounded-xl p-5"><p style={{color:hc}} className="text-xs font-extrabold uppercase tracking-widest mb-3">⭐ Bonus Challenge</p><div className="mb-3">{parsed.bonus.split("\n").map(l=>l.trim()).filter(l=>l&&!l.startsWith("___")).map((l,i)=>(<p key={i} className="text-sm font-medium text-slate-800" style={{whiteSpace:"pre-wrap"}}>{l}</p>))}</div>{[...Array(4)].map((_,i)=><div key={i} className="border-b border-slate-300 h-7 mt-1.5 w-full"/>)}</div>)}
@@ -1744,7 +1792,13 @@ function PrintableView({ parsed, subject, grade, showKey, onToggleKey }) {
         {showKey&&parsed.answerKey&&(
           <div className="mt-4 bg-slate-800 rounded-2xl p-5 rex-answer-key" style={{pageBreakBefore:"always"}}>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Answer Key</p>
-            {answerKeyBlocks(parsed.answerKey).map((b,i)=>(<pre key={i} className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed rex-keyblock" style={{margin:"0 0 8px"}}>{b}</pre>))}
+            <EditableBlock
+              value={parsed.answerKey}
+              rows={Math.min(30, Math.max(8, parsed.answerKey.split("\n").length + 2))}
+              onSave={(newVal) => onUpdateField && onUpdateField("answerKey", newVal)}
+              renderView={<>{answerKeyBlocks(parsed.answerKey).map((b,i)=>(<pre key={i} className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed rex-keyblock" style={{margin:"0 0 8px"}}>{b}</pre>))}</>}
+              dark
+            />
             {parsed.teacherNotes&&(<div className="mt-4 bg-slate-700 rounded-xl px-4 py-3"><p className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">Teacher Notes</p><pre className="whitespace-pre-wrap font-sans text-xs text-slate-300 leading-relaxed">{parsed.teacherNotes}</pre></div>)}
           </div>
         )}
@@ -2248,6 +2302,17 @@ export default function RexStudio() {
   const handleGrade = (g) => { setGrade(g); setResourceType(Object.keys(STANDARDS[g][subject.id])[0]); setRawText(""); setParsed(null); setError(""); };
   const handleSubject = (idx) => { const s=SUBJECTS[idx]; setSubjectIdx(idx); setResourceType(Object.keys(STANDARDS[grade][s.id])[0]); setRawText(""); setParsed(null); setError(""); };
 
+  // In-place edit support: correct a single broken field (an answer key entry,
+  // a section's question/option text) without a full regeneration. Both write
+  // directly into the structured `parsed` object (never round-tripping through
+  // rawText/parseWorksheet), so every output mode that reads `parsed` - print,
+  // TPT, Canva, PDF export - reflects the fix immediately since they share state.
+  const updateParsedField = (field, value) => setParsed((prev) => (prev ? { ...prev, [field]: value } : prev));
+  const updateSectionContent = (index, value) => setParsed((prev) => {
+    if (!prev) return prev;
+    return { ...prev, sections: prev.sections.map((s, i) => (i === index ? { ...s, content: value } : s)) };
+  });
+
   const generate = async () => {
     if (!apiKey.trim()) { setError("Tap '⚠ Set API Key' at the top right."); return; }
     const validTypes = Object.keys(STANDARDS[grade][subject.id]);
@@ -2292,7 +2357,13 @@ export default function RexStudio() {
           .rex-print-area { position: absolute; top: 0; left: 0; width: 100%; }
           .rex-answer-key { page-break-before: always !important; }
           .rex-answer-key, .rex-answer-key * { visibility: visible; }
+          .rex-edit-ui, .rex-edit-ui * { visibility: hidden !important; display: none !important; }
         }
+        /* PDF export (html2canvas) snapshots the live DOM directly and does not
+           respect @media print, so edit controls need a separate, non-print
+           hiding rule tied to the "rex-pdf-export" class the export function
+           toggles on .rex-print-area around the capture. */
+        .rex-pdf-export .rex-edit-ui { display: none !important; }
       `}</style>
 
       <div className="bg-white border-b border-slate-100 px-4 py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-sm rex-no-print">
@@ -2394,7 +2465,7 @@ export default function RexStudio() {
             </div>
           </div>
         )}
-        {rawText&&parsed&&outputMode==="print"&&<PrintableView parsed={parsed} subject={subject} grade={grade} showKey={showKey} onToggleKey={()=>setShowKey(!showKey)}/>}
+        {rawText&&parsed&&outputMode==="print"&&<PrintableView parsed={parsed} subject={subject} grade={grade} showKey={showKey} onToggleKey={()=>setShowKey(!showKey)} onUpdateSection={updateSectionContent} onUpdateField={updateParsedField}/>}
         {rawText&&parsed&&outputMode==="tpt"&&<TPTPrintView parsed={parsed} subject={subject} grade={grade} showKey={showKey} onToggleKey={()=>setShowKey(!showKey)}/>}
         {rawText&&outputMode==="raw"&&<RawView text={rawText} subject={subject}/>}
         {rawText&&parsed&&outputMode==="canva"&&<CanvaView parsed={parsed} subject={subject} grade={grade}/>}
