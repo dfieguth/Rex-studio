@@ -1773,7 +1773,14 @@ function PrintableView({ parsed, subject, grade, showKey, onToggleKey, onUpdateS
             {parsed.directions&&(<div className="mt-4 bg-white bg-opacity-80 rounded-xl px-4 py-2.5"><span className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mr-2">Directions:</span><span className="text-sm text-slate-700">{parsed.directions}</span></div>)}
           </div>
           {parsed.passage&&(<div className="px-7 pt-5"><div className="bg-slate-50 rounded-xl p-4 border border-slate-100"><p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Read the Passage:</p>{parsed.passage.split("\n").map((line,i)=>(<p key={i} className={`text-sm leading-relaxed ${i===0?"font-bold text-slate-800 mb-1":"text-slate-700"}`}>{line}</p>))}</div></div>)}
-          {parsed.supportBox&&(<div className="px-7 pt-5"><div style={{background:`${subject.hc}0d`,border:`1.5px solid ${subject.hc}30`}} className="rounded-xl p-4">{parsed.supportBox.split("\n").filter(l=>l.trim()).map((line,i)=>(<p key={i} className={`text-sm leading-relaxed ${i===0?"font-bold uppercase tracking-wide text-xs mb-2":"text-slate-700"}`} style={i===0?{color:subject.hc}:{}}>{line}</p>))}</div></div>)}
+          {parsed.supportBox&&(<div className="px-7 pt-5"><div style={{background:`${subject.hc}0d`,border:`1.5px solid ${subject.hc}30`}} className="rounded-xl p-4">
+            <EditableBlock
+              value={parsed.supportBox}
+              rows={Math.min(12, Math.max(4, parsed.supportBox.split("\n").length + 2))}
+              onSave={(newVal) => onUpdateField && onUpdateField("supportBox", newVal)}
+              renderView={<>{parsed.supportBox.split("\n").filter(l=>l.trim()).map((line,i)=>(<p key={i} className={`text-sm leading-relaxed ${i===0?"font-bold uppercase tracking-wide text-xs mb-2":"text-slate-700"}`} style={i===0?{color:subject.hc}:{}}>{line}</p>))}</>}
+            />
+          </div></div>)}
           <div className="px-7 py-5 space-y-6">
             {parsed.sections.map((sec,si)=>(
               <div key={si}>
