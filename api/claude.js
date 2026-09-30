@@ -29,14 +29,24 @@ export default async function handler(req, res) {
       }),
     });
 
-    const data = await response.json();
-
-    if (data.error) {
-      return res.status(400).json({ error: data.error.message });
+    // Read as text first: an upstream outage can return a non-JSON body.
+    const raw = await response.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return res.status(502).json({ error: 'The AI service returned an unexpected response (status ' + response.status + '). Please try again.' });
     }
 
-    const text = data.content?.[0]?.text || '';
-    return res.status(200).json({ text });
+    if (data.error) {
+      return res.status(400).json({ error: data.error.message || 'The AI service returned an error.' });
+    }
+
+    // Join every text block, and pass stop_reason through. Previously only
+    // content[0].text was returned and stop_reason was dropped, so a worksheet
+    // cut off at the token limit arrived looking like a normal success.
+    const text = (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+    return res.status(200).json({ text, stopReason: data.stop_reason || null });
 
   } catch (error) {
     return res.status(500).json({ error: error.message || 'Server error' });
