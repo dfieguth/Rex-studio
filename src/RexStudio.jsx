@@ -250,12 +250,26 @@ const OUTPUT_MODES = [
 // gateway error) comes back as an HTML or plain-text page, not JSON, so the
 // body is read as text first; parsing it straight as JSON used to surface
 // errors like "Unexpected token A" instead of what actually went wrong.
+// A single call is abandoned after CALL_TIMEOUT_MS so a stuck request can
+// never leave the page on "Generating..." indefinitely.
+const CALL_TIMEOUT_MS = 180000;
 async function callClaude(prompt, apiKey, maxTokens = 4000) {
-  const res = await fetch("/api/claude", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, apiKey, maxTokens }),
-  });
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), CALL_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch("/api/claude", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, apiKey, maxTokens }),
+      signal: ctrl.signal,
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    if (e && e.name === "AbortError") throw new Error("The worksheet took more than 3 minutes to generate, so it was stopped. Please try again.");
+    throw e;
+  }
+  clearTimeout(timer);
   const body = await res.text();
   let data;
   try {
@@ -948,7 +962,11 @@ function parseWorksheet(text, opts = {}) {
   // the same content twice on the page. Anything that looks like a box header is
   // cut out of the directions here, in code, and recovered into supportBox if the
   // marker was skipped entirely. Real directions are 1-2 sentences.
-  const BOX_HEADER = /(?:[\u2014\u2013\-_=]{3,}\s*(?:\u{1F9E0}|\u{1F4E6}|\u2b50|\u2605)?\s*\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b|(?:^|\n)[^\S\n]*(?:\u{1F9E0}|\u{1F4E6}|\u2b50|\u2605)?\s*\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b|\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b\s*:)/iu;
+  // Any emoji may lead a box header (the model has used 🧠 📦 ⭐ ★ and 💡),
+  // and "HINT BOX —" with a dash counts the same as "HINT BOX:". A fixed
+  // emoji list let "💡 HINT BOX" stay glued to the directions, so the box
+  // never reached supportBox and Canva Pack showed it as the directions.
+  const BOX_HEADER = /(?:[\u2014\u2013\-_=]{3,}\s*(?:\p{Extended_Pictographic}\uFE0F?)?\s*\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b|(?:^|\n)[^\S\n]*(?:\p{Extended_Pictographic}\uFE0F?)?\s*\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b|\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b\s*[:\u2014\u2013]|\p{Extended_Pictographic}\uFE0F?\s*\b(?:HINT BOX|WORD BANK|HELPFUL HINTS?|RULES BOX|REMEMBER BOX|KEY WORDS|VOCABULARY BOX|EXAMPLE BOX|WORKED EXAMPLE)\b)/iu;
   let directions = get("DIRECTIONS");
   let supportBox = get("SUPPORT BOX");
   const strayBox = directions.match(BOX_HEADER);
@@ -2419,6 +2437,7 @@ export default function RexStudio() {
   const [topic, setTopic] = useState("");
   const [outputMode, setOutputMode] = useState("print");
   const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState("");
   const [error, setError] = useState("");
   const [rawText, setRawText] = useState("");
   const [parsed, setParsed] = useState(null);
@@ -2454,7 +2473,7 @@ export default function RexStudio() {
     const expectPassage = !!STANDARDS[grade][subject.id][safeType]?.passage;
     const myId = ++genIdRef.current;
     const stillCurrent = () => genIdRef.current === myId;
-    setLoading(true); setError(""); setRawText(""); setParsed(null); setShowKey(false); setEdited(false);
+    setLoading(true); setLoadingMsg("Generating your worksheet…"); setError(""); setRawText(""); setParsed(null); setShowKey(false); setEdited(false);
     const attempt = async (prompt) => {
       const { text, truncated } = await callClaude(prompt, key, 8000);
       const p = parseWorksheet(text, { expectPassage });
@@ -2470,10 +2489,17 @@ export default function RexStudio() {
       // rather than crashing the whole generation. The attempt with the FEWEST
       // warnings is kept, not simply the last one: a third attempt that comes
       // back worse than the second used to replace it.
+      // Retries are time-budgeted: a new attempt only starts if less than
+      // RETRY_BUDGET_MS has passed since the first request began. A worksheet
+      // whose first attempt was slow ships with its warning banner instead of
+      // chaining two more slow calls (Cowork measured 130s+ for 3 chained calls).
+      const RETRY_BUDGET_MS = 75000;
+      const started = Date.now();
       let best = await attempt(prompt);
       let attempts = 1;
-      while (best.issues.length && attempts < 3 && stillCurrent()) {
+      while (best.issues.length && attempts < 3 && stillCurrent() && Date.now() - started < RETRY_BUDGET_MS) {
         attempts++;
+        setLoadingMsg("Quality check found a problem. Trying again (attempt " + attempts + " of 3)…");
         try {
           const next = await attempt(prompt);
           if (next.issues.length < best.issues.length) best = next;
@@ -2594,7 +2620,7 @@ export default function RexStudio() {
           )}
           <button onClick={generate} disabled={loading} className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl text-white font-extrabold text-sm transition-all active:scale-95 ${loading?"bg-slate-200 cursor-not-allowed text-slate-400":`bg-gradient-to-r ${subject.gradient} shadow-lg hover:shadow-xl hover:opacity-95`}`}>
             {loading?<Loader2 size={18} className="animate-spin"/>:<Sparkles size={18}/>}
-            {loading?"Generating your worksheet…":rawText?"Generate New Worksheet":"Generate Resource"}
+            {loading?(loadingMsg||"Generating your worksheet…"):rawText?"Generate New Worksheet":"Generate Resource"}
           </button>
           {error&&(<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2"><AlertCircle size={15} className="mt-0.5 flex-shrink-0"/><div><p>{error}</p><button onClick={generate} className="mt-2 flex items-center gap-1.5 text-xs font-bold bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-all"><RefreshCw size={11}/> Try Again</button></div></div>)}
         </div>
