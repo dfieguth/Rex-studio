@@ -1322,6 +1322,19 @@ function keyInventedOptionTextWarnings(parsed) {
   return w;
 }
 
+// Numbers that point AT something rather than claim a value: "Paragraph 4",
+// "line 12", "RI.5.4", "DOK 2", "1 point". Reading comprehension keys cite
+// these constantly. Counting them as the key's stated answer made a perfectly
+// good key look like it contradicted its option ("states 4, but option A says
+// ...in 1948"), and the QC retry loop then burned extra generations on it.
+function stripCitationNumbers(s) {
+  return String(s || "")
+    .replace(/\b(?:paragraphs?|para\.?|lines?|sentences?|pages?|pg\.?|steps?|parts?|sections?|questions?|problems?|items?|figures?|tables?|charts?|chapters?|lessons?|stanzas?|verses?|details?|clues?|DOK|level|rubric)\s*#?\s*\d[\d,]*(?:\s*(?:-|\u2013|and|&)\s*\d[\d,]*)?/gi, " ")
+    .replace(/\b[A-Z]{1,4}\.\d+(?:\.[A-Za-z0-9]+)+\b/g, " ")
+    .replace(/\b\d+\.[A-Z]{2,5}\.[A-Za-z0-9]+\b/g, " ")
+    .replace(/\b\d+\s*(?:points?|pts?|marks?)\b/gi, " ");
+}
+
 function answerValueMismatchWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
@@ -1358,7 +1371,7 @@ function answerValueMismatchWarnings(parsed) {
     // of a DIFFERENT option and create a false overlap that hides the bug.
     const nextLetterAt = afterOpen.search(/\s[B-F]\s*[.):(]/);
     const nearby = nextLetterAt >= 0 ? afterOpen.slice(0, nextLetterAt) : afterOpen;
-    const claimedNums = numToks(nearby);
+    const claimedNums = numToks(stripCitationNumbers(nearby));
     const printedNums = numToks(printedText);
     if (!claimedNums.size || !printedNums.size) return;
     const overlaps = [...claimedNums].some((n) => printedNums.has(n));
