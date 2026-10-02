@@ -1363,7 +1363,11 @@ function stripCitationNumbers(s) {
 function answerValueMismatchWarnings(parsed) {
   const w = [];
   if (!parsed || !parsed.answerKey || !parsed.sections.length) return w;
-  const numToks = (s) => new Set((s.match(/\b\d[\d,]*\b/g) || []).filter((n) => n.replace(/,/g, "").length > 0));
+  // Decimals stay whole ("0.05" is one number, not "0" and "05") and are
+  // normalised so "5.000" equals "5" and "1,200" equals "1200". The old
+  // split-on-the-dot version let the lone "0" in "0.5" match the "0" in
+  // "0.05" and hide a real wrong-answer key.
+  const numToks = (s) => new Set((String(s).match(/\d[\d,]*(?:\.\d+)?/g) || []).map((n) => String(parseFloat(n.replace(/,/g, "")))).filter((n) => n !== "NaN"));
   parsed.sections.forEach((sec) => {
     if (sec.type !== "multiple_choice") return;
     const lines = sec.content.split("\n");
@@ -1390,7 +1394,11 @@ function answerValueMismatchWarnings(parsed) {
     const letter = open[1];
     const printedText = printedOptions[qNum + letter];
     if (!printedText) return;
-    const afterOpen = match.text.slice(open.index + open[0].length, open.index + open[0].length + 100);
+    // Read the whole entry (up to 600 characters), not just 100. A correct key often
+    // works the problem and only states the answer at the end ("6 x 5 x 4 = 120 ...
+    // giving l = 8 units"); a 100-character window saw only the working numbers and
+    // called a correct key a mismatch. Still cut at the next lettered clause below.
+    const afterOpen = match.text.slice(open.index + open[0].length, open.index + open[0].length + 600);
     // Stop before the next lettered clause ("B (10 times)", "C. 100...") so a
     // wide window doesn't accidentally borrow a number from the explanation
     // of a DIFFERENT option and create a false overlap that hides the bug.
@@ -1465,6 +1473,29 @@ function degenerateOrderingWarnings(parsed) {
 // then pivot to the real answer, all in ordinary prose ("... is not a
 // whole-number comparison ... so a precise answer is ..."). This is the same
 // failure as hasHedgeLanguage catches, just phrased without "wait/actually."
+// Answer-key-only: the key deliberating or admitting the item has no valid
+// answer. These shapes came from real worksheets that shipped with no banner at
+// all: "Recalculating... This does not equal 30", "None of the above equal 30 as
+// originally written", "NOTE TO SELF (silent correction)" followed by a reprinted
+// replacement question, and "However, among the answer choices, B most precisely
+// describes...". Plain "X does not equal Y" is deliberately NOT flagged: a key
+// explaining why a wrong choice is wrong says exactly that.
+function hasKeyDeliberation(text) {
+  const t = String(text || "");
+  return /\bnote to self\b|\bsilent(?:ly)? (?:correction|fix|rewrite|revision)\b|\bas originally written\b|\breplacement question\b/i.test(t)
+    || /(?:^|[\n.!?\u2026:;\u2014\u2013])\s*(?:re-?calculating|re-?checking|re-?computing|re-?evaluating|re-?verifying|re-?working)\s*[.\u2026:,\u2014\u2013-]/im.test(t)
+    || /\bnone of (?:the )?(?:above|options|answer choices|choices)\b[^.\n]{0,30}\b(?:equal|match)\b/i.test(t)
+    || /\b(?:however|but),?\s+among (?:the )?(?:answer )?(?:choices|options)\b/i.test(t)
+    || /\b(?:does|do) not (?:equal|match)\b[^.\n]{0,25}\s[\u2014\u2013-]+\s*(?:the )?(?:most|closest|best)\b/i.test(t);
+}
+
+// Any field: the model talking about its own prompt instead of writing the
+// worksheet ("This line is required by the template and is noted here for
+// completeness" appeared in a printed Bonus line).
+function hasTemplateTalk(text) {
+  return /\b(?:required by the (?:template|format)|per the template|noted here for completeness|included here for completeness|for completeness,? (?:this|the) (?:line|section|item))\b/i.test(String(text || ""));
+}
+
 function hasMessyReasoning(text) {
   return /\bis not a whole[\s-]number\b|\bso a precise\b|\bthis (?:is not|violates|breaks)\b|\bexceeds a single digit\b/i.test(text || "");
 }
@@ -1649,6 +1680,9 @@ function worksheetWarnings(parsed, rawText) {
   if (hasTeacherRepairInstruction(parsed.answerKey) || hasTeacherRepairInstruction(parsed.teacherNotes)) w.push("The answer key admits a question is built wrong and tells you to fix it before printing. The item needs regenerating, not patching.");
   if (hasItemContentTamperingLanguage(parsed.answerKey)) w.push("The answer key announces it rewrote an option's content mid-generation. Whatever the printed page still says, the key is no longer describing it.");
   if (hasMessyReasoning(parsed.answerKey)) w.push("The answer key visibly computes a wrong or messy result before landing on the real answer, without using a forbidden self-correction word. This should never reach the printed key.");
+  if (hasKeyDeliberation(parsed.answerKey) || hasKeyDeliberation(parsed.teacherNotes)) w.push("The answer key deliberates, recalculates, or admits no choice fits (for example \"NOTE TO SELF\", \"as originally written\", \"none of the above equal\"). The item is not trustworthy and needs regenerating.");
+  [["title", parsed.title], ["directions", parsed.directions], ["support box", parsed.supportBox], ["reading passage", parsed.passage], ["bonus question", parsed.bonus], ["answer key", parsed.answerKey], ["teacher notes", parsed.teacherNotes]].forEach(([name, val]) => { if (hasTemplateTalk(val)) w.push("The " + name + " talks about the generation template instead of being worksheet content, which should never reach the page."); });
+  parsed.sections.forEach((sec) => { if (hasTemplateTalk(sec.content)) w.push("Question text in \"" + sec.heading + "\" talks about the generation template instead of being worksheet content, which should never reach the page."); });
   // Question numbers must be unique across the whole worksheet. When the
   // model restarts numbering per section (1, 2 in Vocabulary, then 1, 2
   // again in Comprehension), the answer key mirrors it, and cleanAnswerKey's
