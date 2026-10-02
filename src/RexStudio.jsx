@@ -2456,6 +2456,10 @@ export default function RexStudio() {
   const [parsed, setParsed] = useState(null);
   const [showKey, setShowKey] = useState(false);
   const [edited, setEdited] = useState(false);
+  // Why the last generation retried: one entry per attempt that had warnings.
+  // Retries cost 30 to 60 seconds each, so seeing WHICH check keeps firing on
+  // first attempts is how real model errors get separated from false alarms.
+  const [retryLog, setRetryLog] = useState([]);
 
   const handleGrade = (g) => { invalidateGeneration(); setGrade(g); setResourceType(Object.keys(STANDARDS[g][subject.id])[0]); setRawText(""); setParsed(null); setError(""); };
   const handleSubject = (idx) => { invalidateGeneration(); const s=SUBJECTS[idx]; setSubjectIdx(idx); setResourceType(Object.keys(STANDARDS[grade][s.id])[0]); setRawText(""); setParsed(null); setError(""); };
@@ -2486,7 +2490,7 @@ export default function RexStudio() {
     const expectPassage = !!STANDARDS[grade][subject.id][safeType]?.passage;
     const myId = ++genIdRef.current;
     const stillCurrent = () => genIdRef.current === myId;
-    setLoading(true); setLoadingMsg("Generating your worksheet…"); setError(""); setRawText(""); setParsed(null); setShowKey(false); setEdited(false);
+    setLoading(true); setLoadingMsg("Generating your worksheet…"); setRetryLog([]); setError(""); setRawText(""); setParsed(null); setShowKey(false); setEdited(false);
     const attempt = async (prompt) => {
       const { text, truncated } = await callClaude(prompt, key, 8000);
       const p = parseWorksheet(text, { expectPassage });
@@ -2509,16 +2513,21 @@ export default function RexStudio() {
       const RETRY_BUDGET_MS = 75000;
       const started = Date.now();
       let best = await attempt(prompt);
+      const log = [];
+      if (best.issues.length) log.push({ attempt: 1, issues: best.issues });
       let attempts = 1;
       while (best.issues.length && attempts < 3 && stillCurrent() && Date.now() - started < RETRY_BUDGET_MS) {
         attempts++;
         setLoadingMsg("Quality check found a problem. Trying again (attempt " + attempts + " of 3)…");
         try {
           const next = await attempt(prompt);
+          if (next.issues.length) log.push({ attempt: attempts, issues: next.issues });
           if (next.issues.length < best.issues.length) best = next;
         } catch { break; }
       }
       if (!stillCurrent()) return;
+      if (log.length) { try { console.info("[REX QC] attempts with warnings:", JSON.stringify(log)); } catch { /* logging only */ } }
+      setRetryLog(log);
       setRawText(best.text);
       setParsed(best.parsed);
     } catch(e) {
@@ -2638,6 +2647,12 @@ export default function RexStudio() {
           {error&&(<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-start gap-2"><AlertCircle size={15} className="mt-0.5 flex-shrink-0"/><div><p>{error}</p><button onClick={generate} className="mt-2 flex items-center gap-1.5 text-xs font-bold bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-lg transition-all"><RefreshCw size={11}/> Try Again</button></div></div>)}
         </div>
 
+        {rawText&&parsed&&retryLog.length>0&&(
+          <div className="bg-slate-50 border border-slate-200 text-slate-500 px-4 py-2.5 rounded-xl text-xs rex-no-print">
+            <p className="font-bold text-slate-600">Quality check log: {retryLog.length} of this worksheet's attempts had warnings</p>
+            <ul className="mt-1 space-y-0.5">{retryLog.map((r)=>(<li key={r.attempt}>Attempt {r.attempt}: {r.issues.join(" | ")}</li>))}</ul>
+          </div>
+        )}
         {rawText&&parsed&&warnings.length>0&&(
           <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm flex items-start gap-2 rex-no-print">
             <AlertCircle size={15} className="mt-0.5 flex-shrink-0"/>
