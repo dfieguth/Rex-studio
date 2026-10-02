@@ -877,6 +877,16 @@ function numberedKeyBlocks(text) {
   return blocks;
 }
 
+// The prompt template shows placeholders as "(Engaging specific title)", and
+// the model sometimes keeps those parentheses, so a worksheet printed with the
+// title "(Miles Through the Wild)". Only a single pair wrapping the WHOLE value
+// is removed; a title like "Fractions (Part 2)" or "(Part 1) Fractions (Part 2)"
+// is left alone.
+function unwrapParens(v) {
+  const m = String(v || "").trim().match(/^\(([^()]*)\)$/);
+  return m ? m[1].trim() : v;
+}
+
 // expectPassage: true when the resource type asked for a passage, false when it
 // did not, undefined when the caller does not know. The fallback passage
 // finders (Steps 3 and 4) only run when a passage was actually requested.
@@ -1007,9 +1017,9 @@ function parseWorksheet(text, opts = {}) {
   });
 
   return {
-    title: get("TITLE"),
+    title: unwrapParens(get("TITLE")),
     subtitle: get("SUBTITLE"),
-    directions,
+    directions: unwrapParens(directions),
     supportBox,
     passage,
     sections,
@@ -1055,7 +1065,22 @@ function serializeWorksheet(p) {
 // "resolving:," "re-examine," "conflict," "corrected interpretation." A single
 // shared list means every scan site updates together instead of drifting.
 function hasHedgeLanguage(text) {
-  return /\b(wait|let me|hold on|actually|re-?reading|re-?examin\w*|corrected interpretation)\b|\bresolving:|:\s*(revising|correcting|resolving|re-?examin\w*)\b/i.test(text || "");
+  // Looks for the SHAPE of a model correcting itself mid-answer, not the bare
+  // words. The old version flagged "wait", "actually", "let me" anywhere, so
+  // "the numbers actually tell us", dialogue like "Wait for me!", "stir, wait
+  // 5 minutes" and narration like "she actually liked it" all triggered
+  // quality-check retries (30 to 60 seconds each). Quoted dialogue is removed
+  // first, and the words only count at a clause boundary or when they announce
+  // a redo.
+  const t = String(text || "")
+    .replace(/"[^"\n]{0,400}"/g, " ")
+    .replace(/\u201C[^\u201D\n]{0,400}\u201D/g, " ");
+  const B = "(?:^|[\\n.!?\\u2026:;\\u2014\\u2013]|\\.\\.\\.)\\s*";
+  const sentenceStart = new RegExp(B + "(?:(?:wait|hold on)\\s*[,!.\\u2026\\u2014\\u2013:-]|wait\\s*$|actually\\b)", "im");
+  const afterComma = /,\s*(?:wait|actually|hold on)\s*[,.\u2014\u2013-]/i;
+  const redo = /\blet me (?:re|try|redo|check|verify|reconsider|fix|correct|rethink|revisit|start over|work|double|recount|recalc|recompute|see again)/i;
+  return sentenceStart.test(t) || afterComma.test(t) || redo.test(t)
+    || /\b(?:re-?reading|re-?examin\w*|corrected interpretation)\b|\bresolving:|:\s*(?:revising|correcting|resolving|re-?examin\w*)\b/i.test(t);
 }
 
 // A categorically different failure from hedge language: the model discovers a
@@ -1499,7 +1524,10 @@ function answerKeyWarnings(parsed) {
   // Which question numbers does the key actually address?
   const answered = new Set();
   key.split("\n").forEach((l) => {
-    const m = l.trim().match(/^(\d+)[.):]\s*(.*)$/);
+    // (?!\d): a dot followed straight by a digit is a decimal ("58.470", "0.12"), not a
+    // question marker. Stacked-decimal work in a key used to register as answers to
+    // questions 58, 34, 105 and trigger a "not on the worksheet" warning.
+    const m = l.trim().match(/^(\d+)[.):](?!\d)\s*(.*)$/);
     if (m) answered.add(m[1]);
   });
 
