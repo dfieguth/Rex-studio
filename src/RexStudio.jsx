@@ -522,6 +522,12 @@ ${skillsBind}
   // ── Section assembly: subject-shaped structure with running question numbers ──
   const line = "_______________________________________________";
   const hasPassage = !!std.passage;
+  // Story Elements needs characters, a setting, a problem, and a resolution. The ELA
+  // topic pool is real California history and science, and with nothing saying "story"
+  // the model wrote a nonfiction weather-satellite article for a Story Elements
+  // worksheet. Narrative-only skills now say so explicitly.
+  const narrativeOnly = subjectId === "ela" && hasPassage && /story elements/i.test(resourceType);
+  const passageGenreNote = narrativeOnly ? " GENRE REQUIRED: this passage MUST be a short original STORY (realistic or historical fiction) with named characters, a clear setting, a problem or conflict, events in order, and a resolution. Do NOT write an informational article, a biography, or an explanation of how something works. If the topic is a place, an event, or a science idea, make it the setting or the problem a character faces." : "";
   let n = 0;
   let pts = 0;
   const next = () => ++n;
@@ -719,7 +725,7 @@ ${difficulty === "support" && !isAssessment ? `[SUPPORT BOX]
 
 ` : ""}${hasPassage ? `[PASSAGE]
 (YOUR PASSAGE TITLE IN ALL CAPS)
-(Your original ${gs.passageWords} word passage goes here. ${gs.passageStyle} Write ONLY the passage text. No instructions. No brackets. No placeholders. Real sentences only. Start writing the passage immediately after the title line.)
+(Your original ${gs.passageWords} word passage goes here. ${gs.passageStyle}${passageGenreNote} Write ONLY the passage text. No instructions. No brackets. No placeholders. Real sentences only. Start writing the passage immediately after the title line.)
 
 ` : ""}${sectionText}
 
@@ -1090,8 +1096,22 @@ function hasHedgeLanguage(text) {
 // key. The worksheet is unusable as printed, so this must never be savable.
 // Structural signal, not a vocabulary list: these are all phrasings that
 // address the teacher as someone who must edit the page before use.
+// Answer key and teacher notes: the key admitting an item is broken and telling
+// the teacher to fix it. "internal conflict" used to be a bare trigger, but it is
+// also a core Story Elements term ("Maya's internal conflict is her fear of
+// failing"), so every key explaining one was flagged as "built wrong". It now only
+// counts when it points at the item itself ("an internal conflict in the item").
 function hasTeacherRepairInstruction(text) {
-  return /\b(NOTE TO TEACHER|construction error|internal conflict|cannot be satisfied|before (?:distributing|printing)|when administering|administer with|corrected (?:version|distractor|bonus)|teachers? should replace)\b/i.test(text || "");
+  return /\b(NOTE TO TEACHER|construction error|cannot be satisfied|before (?:distributing|printing)|when administering|administer with|corrected (?:version|distractor|bonus)|teachers? should replace)\b|\binternal conflict (?:in|within|between) (?:the |this |these |its |both )?(?:item|question|key|options?|constraints?|clues?|conditions?|answer choices?|answers?)\b/i.test(text || "");
+}
+
+// Student-facing fields (question text, passage, directions, bonus, support box).
+// Only phrases that can ONLY be a note to the teacher. "corrected version" and
+// "cannot be satisfied" are normal in student tasks ("Write a corrected version of
+// the sentence", error analysis, "explain why the conditions cannot be satisfied"),
+// so they apply to the answer key only.
+function hasStudentPageRepairNote(text) {
+  return /\b(NOTE TO TEACHER|before (?:distributing|printing)|when administering|administer with|corrected (?:distractor|bonus)|teachers? should replace)\b/i.test(text || "");
 }
 
 // A step further than hasTeacherRepairInstruction: this isn't the model
@@ -1664,7 +1684,7 @@ function worksheetWarnings(parsed, rawText) {
   // against the answer key, but the same leak lands on the student page too.
   if (hasMessyReasoning(parsed.passage)) w.push("The reading passage visibly works through a wrong or messy result before landing on an answer. This should never reach the student page.");
   if (hasMessyReasoning(parsed.bonus)) w.push("The bonus question visibly works through a wrong or messy result before landing on an answer. This should never reach the student page.");
-  if (hasTeacherRepairInstruction(parsed.passage) || hasTeacherRepairInstruction(parsed.bonus) || hasTeacherRepairInstruction(parsed.supportBox) || hasTeacherRepairInstruction(parsed.directions)) w.push("A student-facing block contains a note telling the teacher to fix the item before printing. The item needs regenerating, not patching.");
+  if (hasStudentPageRepairNote(parsed.passage) || hasStudentPageRepairNote(parsed.bonus) || hasStudentPageRepairNote(parsed.supportBox) || hasStudentPageRepairNote(parsed.directions)) w.push("A student-facing block contains a note telling the teacher to fix the item before printing. The item needs regenerating, not patching.");
   if (hasItemContentTamperingLanguage(parsed.passage) || hasItemContentTamperingLanguage(parsed.bonus) || hasItemContentTamperingLanguage(parsed.supportBox) || hasItemContentTamperingLanguage(parsed.directions)) w.push("A student-facing block announces that its own content was rewritten mid-generation. The printed page can no longer be trusted to match the key.");
   if (hasHedgeLanguage(parsed.teacherNotes)) w.push("The teacher notes contain visible self-correction language, which usually means the generation went off the rails.");
   parsed.sections.forEach((sec) => {
@@ -1672,7 +1692,7 @@ function worksheetWarnings(parsed, rawText) {
     if (hasCorruptedNumber(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains a corrupted number (a digit fused directly to letters), which usually means a generation glitch.");
     // These three were previously answer-key-only checks. The same leaks land
     // in printed question and option text, where a student reads them.
-    if (hasTeacherRepairInstruction(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains a note telling the teacher to fix the item before printing. The item needs regenerating, not patching.");
+    if (hasStudentPageRepairNote(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains a note telling the teacher to fix the item before printing. The item needs regenerating, not patching.");
     if (hasItemContentTamperingLanguage(sec.content)) w.push("Question text in \"" + sec.heading + "\" announces that its own content was rewritten mid-generation. The printed page can no longer be trusted to match the key.");
     if (hasMessyReasoning(sec.content)) w.push("Question text in \"" + sec.heading + "\" visibly works through a wrong or messy result before landing on an answer. This should never reach the student page.");
   });
