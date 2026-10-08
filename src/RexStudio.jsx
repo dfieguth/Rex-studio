@@ -788,6 +788,7 @@ RULES:
 - For select-all-that-apply questions, put the select-all instruction inside the numbered question text itself and label the choices A. through E.
 - Student-friendly tone for ${gradeLabel} grade: ${gs.tone}.
 - Every question must stay within the ${gradeLabel} grade standards listed above. Do not drift above or below grade level.
+- REALISTIC NUMBERS: every quantity must be believable for the situation (a day's driving, a person's age, a price, a class size). Do not use a distance, speed, or amount that could not really happen, such as 2,134 miles driven in 2 days.
 - STAY ON THE LISTED SKILLS: do not bring in skills from another topic in the warm-up, hints, questions, or bonus. For example, no fractions or decimals on a multiplication and division worksheet unless they appear in the Skills list above.
 - EQUAL SHARING MUST DIVIDE EVENLY: when a question asks "how many" each person, group, or day gets from an equal share, choose numbers that divide with no remainder, unless the skill is remainders and the question asks for the remainder. Check the division before writing the question.
 - THE BONUS MUST BE SOLVABLE: write the bonus with one clear answer computed from the numbers printed in it, check that every division in it comes out even, and put the worked answer on the "Bonus:" line of the answer key.
@@ -2640,8 +2641,8 @@ export default function RexStudio() {
   const [retryLog, setRetryLog] = useState([]);
   const [genCtx, setGenCtx] = useState(null);
 
-  const handleGrade = (g) => { invalidateGeneration(); setGrade(g); setResourceType(Object.keys(STANDARDS[g][subject.id])[0]); setRawText(""); setParsed(null); setError(""); };
-  const handleSubject = (idx) => { invalidateGeneration(); const s=SUBJECTS[idx]; setSubjectIdx(idx); setResourceType(Object.keys(STANDARDS[grade][s.id])[0]); setRawText(""); setParsed(null); setError(""); };
+  const handleGrade = (g) => { invalidateGeneration(); setGrade(g); setResourceType(Object.keys(STANDARDS[g][subject.id])[0]); setTopic(""); setRawText(""); setParsed(null); setError(""); };
+  const handleSubject = (idx) => { invalidateGeneration(); const s=SUBJECTS[idx]; setSubjectIdx(idx); setResourceType(Object.keys(STANDARDS[grade][s.id])[0]); setTopic(""); setRawText(""); setParsed(null); setError(""); };
 
   // In-place edit support: correct a single broken field (an answer key entry,
   // a section's question/option text) without a full regeneration. Both write
@@ -2791,7 +2792,7 @@ export default function RexStudio() {
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">Resource Type</label>
             <div className="flex flex-wrap gap-2">
-              {resourceTypes.map(t=>(<button key={t} onClick={()=>{invalidateGeneration();setResourceType(t);setRawText("");setParsed(null);setError("");}} className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${resourceType===t?`bg-gradient-to-br ${subject.gradient} text-white border-transparent shadow-sm`:`bg-white ${subject.border} ${subject.accent} hover:shadow-sm`}`}>{t}</button>))}
+              {resourceTypes.map(t=>(<button key={t} onClick={()=>{invalidateGeneration();setResourceType(t);setTopic("");setRawText("");setParsed(null);setError("");}} className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${resourceType===t?`bg-gradient-to-br ${subject.gradient} text-white border-transparent shadow-sm`:`bg-white ${subject.border} ${subject.accent} hover:shadow-sm`}`}>{t}</button>))}
             </div>
           </div>
           <div>
