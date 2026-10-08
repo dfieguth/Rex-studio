@@ -788,6 +788,10 @@ RULES:
 - For select-all-that-apply questions, put the select-all instruction inside the numbered question text itself and label the choices A. through E.
 - Student-friendly tone for ${gradeLabel} grade: ${gs.tone}.
 - Every question must stay within the ${gradeLabel} grade standards listed above. Do not drift above or below grade level.
+- STAY ON THE LISTED SKILLS: do not bring in skills from another topic in the warm-up, hints, questions, or bonus. For example, no fractions or decimals on a multiplication and division worksheet unless they appear in the Skills list above.
+- EQUAL SHARING MUST DIVIDE EVENLY: when a question asks "how many" each person, group, or day gets from an equal share, choose numbers that divide with no remainder, unless the skill is remainders and the question asks for the remainder. Check the division before writing the question.
+- THE BONUS MUST BE SOLVABLE: write the bonus with one clear answer computed from the numbers printed in it, check that every division in it comes out even, and put the worked answer on the "Bonus:" line of the answer key.
+- HINTS TEACH, THEY DO NOT NARRATE: a hint states a method the student can follow ("Divide the total by the number of days"). Never describe your own reasoning in a hint or bonus, such as "after noting that..."
 - CRITICAL VARIATION RULE: Every generation must feel completely fresh and different. Never reuse the same passage topic, scenario, character names, or context from previous generations.
 - For passages: use the assigned topic below. Do not default to generic topics.
 - For applied problems: use different student names, places, and scenarios every time, with California contexts where natural.
@@ -1652,7 +1656,95 @@ function answerKeyWarnings(parsed) {
   return w;
 }
 
-function worksheetWarnings(parsed, rawText) {
+// A hint or bonus that narrates the model's own reasoning instead of teaching
+// ("after noting the '3 times' clue tells you the total equals the leftover").
+// Real student hints are imperative ("Note that...", "First, divide"), so the
+// participle forms are a safe, narrow signal. No banned word is involved, which
+// is why the forbidden-word check missed it.
+function hasHedgingHint(text) {
+  const t = String(text || "").replace(/"[^"\n]{0,400}"/g, " ").replace(/“[^”\n]{0,400}”/g, " ");
+  return /\b(?:after|upon)\s+noting\b|\bhaving noted\b/i.test(t);
+}
+
+function isMathSheet(parsed, ctx) {
+  if (ctx && ctx.subjectId) return ctx.subjectId === "math";
+  return /(?:^|\s)MATH(?:\s|$)/.test(String((parsed && parsed.subtitle) || ""));
+}
+
+// A numeric Bonus has to be answerable: the printed bonus has real numbers, so
+// the key's Bonus line must state a worked result that contains a number. A
+// bonus whose key entry is missing or has no numbers cannot be checked or taught.
+function bonusWarnings(parsed, ctx) {
+  const w = [];
+  if (!parsed || !parsed.bonus || !isMathSheet(parsed, ctx)) return w;
+  const bonusNums = (String(parsed.bonus).replace(/_+/g, " ").match(/\d[\d,]*(?:\.\d+)?/g) || []);
+  if (bonusNums.length < 2) return w;
+  const key = String(parsed.answerKey || "");
+  const re = /(?:^|\n)[ \t]*\**Bonus(?: Challenge)?\**[ \t]*[:.\u2014\u2013-][ \t]*([\s\S]*)$/gi;
+  let m, entry = null;
+  while ((m = re.exec(key)) !== null) { entry = m[1]; re.lastIndex = m.index + 1; }
+  if (entry === null) { w.push("The bonus is a numeric problem, but the answer key has no Bonus entry, so its answer cannot be checked."); return w; }
+  const body = entry.split(/\n\s*\n|\n(?=\[)/)[0];
+  if (!/\d/.test(body)) w.push("The bonus is a numeric problem, but the answer key's Bonus entry states no worked number, so there is no computable answer.");
+  return w;
+}
+
+// "How many does each get?" over an equal-sharing premise needs a whole
+// answer unless the item is about remainders. Deliberately narrow: exactly two
+// whole numbers, an equal-sharing cue, and a "how many ... each/per" ask.
+function nonWholeShareWarnings(parsed) {
+  const w = [];
+  if (!parsed || !parsed.sections) return w;
+  const blocks = parsed.answerKey ? numberedKeyBlocks(parsed.answerKey) : [];
+  const skip = /\b(remainder|left ?over|leftovers?|extra|round(?:ed|ing)?|estimate|about|approximately|full|whole|more|fewer|less|most|least|\$|percent)\b|\$/i;
+  const seen = new Set();
+  parsed.sections.forEach((sec) => {
+    const lines = sec.content.split("\n").map((l) => l.trim());
+    lines.forEach((l, i) => {
+      const qm = l.match(/^(\d+)[.)]\s+(.*)$/);
+      if (!qm) return;
+      let stem = qm[2];
+      for (let j = i + 1; j < lines.length && j < i + 4; j++) {
+        if (!lines[j] || /^[A-F][.)]\s/.test(lines[j]) || /^(?:Show your work|Answer:|\[)/i.test(lines[j]) || /^\d+[.)]\s/.test(lines[j])) break;
+        stem += " " + lines[j];
+      }
+      if (!/\bhow many\b/i.test(stem) || !/\b(?:equally|evenly|same (?:number|amount))\b/i.test(stem) || !/\b(?:each|per|every)\b/i.test(stem) || skip.test(stem)) return;
+      if (/\d[\d,]*\.\d/.test(stem)) return;
+      const nums = (stem.match(/\d[\d,]*/g) || []).map((x) => parseInt(x.replace(/,/g, ""), 10));
+      if (nums.length !== 2) return;
+      const N = Math.max(nums[0], nums[1]), M = Math.min(nums[0], nums[1]);
+      if (M < 2 || N % M === 0 || seen.has(qm[1])) return;
+      const kb = blocks.find((b) => String(b.num) === qm[1]);
+      if (kb && /remainder|left ?over|\bR\s?\d|\br\d/i.test(kb.text)) return;
+      seen.add(qm[1]);
+      w.push("Question " + qm[1] + " asks how many each gets when " + N.toLocaleString("en-US") + " is shared equally " + "by " + M + ", but it does not divide evenly and the question is not about a remainder.");
+    });
+  });
+  return w;
+}
+
+// Topic adherence for the math resource types whose skill list contains no
+// fractions: two or more different proper fractions in student-facing text mean
+// the model wandered into another topic. Dates (3/4/2024) and improper
+// "fractions" (24/6, a division written with a slash) are ignored.
+const NO_FRACTION_TYPES = ["Multiplication & Division", "Place Value & Rounding", "Order of Operations"];
+function offTopicFractionWarnings(parsed, ctx) {
+  const w = [];
+  if (!parsed || !ctx || ctx.subjectId !== "math" || !NO_FRACTION_TYPES.includes(ctx.resourceType)) return w;
+  if (/fraction|decimal|mixed number|equivalen/i.test(String(ctx.topic || ""))) return w;
+  const text = [parsed.title, parsed.directions, parsed.supportBox, parsed.bonus].concat((parsed.sections || []).map((s) => s.content)).join("\n");
+  const found = new Set();
+  const re = /(?<![\d/.])(\d{1,2})\s?\/\s?(\d{1,2})(?![\d/])/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const n = parseInt(m[1], 10), d = parseInt(m[2], 10);
+    if (n >= 1 && d > n && d <= 12) found.add(n + "/" + d);
+  }
+  if (found.size >= 2) w.push("This " + ctx.resourceType + " worksheet uses fractions (" + [...found].slice(0, 3).join(", ") + "), which are not part of its skills. The content drifted off topic.");
+  return w;
+}
+
+function worksheetWarnings(parsed, rawText, ctx) {
   const w = [];
   if (!parsed) return w;
   if (!parsed.title) w.push("The title is missing.");
@@ -1686,6 +1778,10 @@ function worksheetWarnings(parsed, rawText) {
   if (hasMessyReasoning(parsed.bonus)) w.push("The bonus question visibly works through a wrong or messy result before landing on an answer. This should never reach the student page.");
   if (hasStudentPageRepairNote(parsed.passage) || hasStudentPageRepairNote(parsed.bonus) || hasStudentPageRepairNote(parsed.supportBox) || hasStudentPageRepairNote(parsed.directions)) w.push("A student-facing block contains a note telling the teacher to fix the item before printing. The item needs regenerating, not patching.");
   if (hasItemContentTamperingLanguage(parsed.passage) || hasItemContentTamperingLanguage(parsed.bonus) || hasItemContentTamperingLanguage(parsed.supportBox) || hasItemContentTamperingLanguage(parsed.directions)) w.push("A student-facing block announces that its own content was rewritten mid-generation. The printed page can no longer be trusted to match the key.");
+  if (hasHedgingHint(parsed.supportBox) || hasHedgingHint(parsed.bonus) || hasHedgingHint(parsed.directions)) w.push("A hint or the bonus narrates its own reasoning (for example \"after noting...\") instead of teaching the student. It needs regenerating.");
+  bonusWarnings(parsed, ctx).forEach((x) => w.push(x));
+  nonWholeShareWarnings(parsed).forEach((x) => w.push(x));
+  offTopicFractionWarnings(parsed, ctx).forEach((x) => w.push(x));
   if (hasHedgeLanguage(parsed.teacherNotes)) w.push("The teacher notes contain visible self-correction language, which usually means the generation went off the rails.");
   parsed.sections.forEach((sec) => {
     if (hasHedgeLanguage(sec.content)) w.push("Question text in \"" + sec.heading + "\" contains visible self-correction language, which should never reach the student page.");
@@ -2542,6 +2638,7 @@ export default function RexStudio() {
   // Retries cost 30 to 60 seconds each, so seeing WHICH check keeps firing on
   // first attempts is how real model errors get separated from false alarms.
   const [retryLog, setRetryLog] = useState([]);
+  const [genCtx, setGenCtx] = useState(null);
 
   const handleGrade = (g) => { invalidateGeneration(); setGrade(g); setResourceType(Object.keys(STANDARDS[g][subject.id])[0]); setRawText(""); setParsed(null); setError(""); };
   const handleSubject = (idx) => { invalidateGeneration(); const s=SUBJECTS[idx]; setSubjectIdx(idx); setResourceType(Object.keys(STANDARDS[grade][s.id])[0]); setRawText(""); setParsed(null); setError(""); };
@@ -2573,11 +2670,12 @@ export default function RexStudio() {
     const myId = ++genIdRef.current;
     const stillCurrent = () => genIdRef.current === myId;
     setLoading(true); setLoadingMsg("Generating your worksheet…"); setRetryLog([]); setError(""); setRawText(""); setParsed(null); setShowKey(false); setEdited(false);
+    const ctx = { subjectId: subject.id, resourceType: safeType, topic };
     const attempt = async (prompt) => {
       const { text, truncated } = await callClaude(prompt, key, 8000);
       const p = parseWorksheet(text, { expectPassage });
       p.truncated = truncated;
-      return { text, parsed: p, issues: worksheetWarnings(p, text) };
+      return { text, parsed: p, issues: worksheetWarnings(p, text, ctx) };
     };
     try {
       const prompt = buildPrompt(grade, subject.id, safeType, difficulty, purpose, topic);
@@ -2610,6 +2708,7 @@ export default function RexStudio() {
       if (!stillCurrent()) return;
       if (log.length) { try { console.info("[REX QC] attempts with warnings:", JSON.stringify(log)); } catch { /* logging only */ } }
       setRetryLog(log);
+      setGenCtx(ctx);
       setRawText(best.text);
       setParsed(best.parsed);
     } catch(e) {
@@ -2619,7 +2718,7 @@ export default function RexStudio() {
   };
 
   const gradeLabel = gradeOrdinal(grade);
-  const warnings = parsed ? worksheetWarnings(parsed, rawText) : [];
+  const warnings = parsed ? worksheetWarnings(parsed, rawText, genCtx) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50">
