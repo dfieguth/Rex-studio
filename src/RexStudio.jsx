@@ -1090,7 +1090,11 @@ function hasHedgeLanguage(text) {
   const sentenceStart = new RegExp(B + "(?:(?:wait|hold on)\\s*[,!.\\u2026\\u2014\\u2013:-]|wait\\s*$|actually\\b)", "im");
   const afterComma = /,\s*(?:wait|actually|hold on)\s*[,.\u2014\u2013-]/i;
   const redo = /\blet me (?:re|try|redo|check|verify|reconsider|fix|correct|rethink|revisit|start over|work|double|recount|recalc|recompute|see again)/i;
-  return sentenceStart.test(t) || afterComma.test(t) || redo.test(t)
+  // "Let's check carefully" / "let's recount" in a worked example is the same
+  // self-doubt as "let me check". "Let's double-check" is left alone because
+  // real hints use it to teach a checking step.
+  const letsRedo = /\blet(?:'|\u2019)?s (?:re-?check|re-?calculate|re-?count|re-?do|re-?think|check (?:that |this )?(?:again|carefully)|try (?:that |this )?again|start over|see again)\b/i;
+  return sentenceStart.test(t) || afterComma.test(t) || redo.test(t) || letsRedo.test(t)
     || /\b(?:re-?reading|re-?examin\w*|corrected interpretation)\b|\bresolving:|:\s*(?:revising|correcting|resolving|re-?examin\w*)\b/i.test(t);
 }
 
@@ -1667,6 +1671,13 @@ function hasHedgingHint(text) {
   return /\b(?:after|upon)\s+noting\b|\bhaving noted\b/i.test(t);
 }
 
+// A worked example that questions its own arithmetic ("= 4? Let's see")
+// is self-talk. Only the support box is checked: real questions may ask
+// "Is 1,324 / 4 = 331?" on purpose.
+function hasSelfQuestioningMath(text) {
+  return /=\s*\d[\d,]*(?:\.\d+)?\s*\?/.test(String(text || ""));
+}
+
 function isMathSheet(parsed, ctx) {
   if (ctx && ctx.subjectId) return ctx.subjectId === "math";
   return /(?:^|\s)MATH(?:\s|$)/.test(String((parsed && parsed.subtitle) || ""));
@@ -1687,6 +1698,14 @@ function bonusWarnings(parsed, ctx) {
   if (entry === null) { w.push("The bonus is a numeric problem, but the answer key has no Bonus entry, so its answer cannot be checked."); return w; }
   const body = entry.split(/\n\s*\n|\n(?=\[)/)[0];
   if (!/\d/.test(body)) w.push("The bonus is a numeric problem, but the answer key's Bonus entry states no worked number, so there is no computable answer.");
+  // A bonus that requires the answer to divide evenly among N, where the key's
+  // own stated answer does not (clues give 284, "shared evenly among 8").
+  const div = String(parsed.bonus).match(/\b(?:evenly|equally)\b[^.?!\n]{0,40}?\b(?:among|between|by|into)\s+(\d+)\b/i);
+  const ans = body.match(/\b(?:number|answer)\s+(?:is|=)\s*\**\s*(\d[\d,]*)\b/i);
+  if (div && ans) {
+    const N = parseInt(div[1], 10), X = parseInt(ans[1].replace(/,/g, ""), 10);
+    if (N > 1 && X % N !== 0) w.push("The bonus says the answer divides evenly by " + N + ", but the key's answer " + X.toLocaleString("en-US") + " does not. The bonus contradicts itself.");
+  }
   return w;
 }
 
@@ -1779,6 +1798,7 @@ function worksheetWarnings(parsed, rawText, ctx) {
   if (hasMessyReasoning(parsed.bonus)) w.push("The bonus question visibly works through a wrong or messy result before landing on an answer. This should never reach the student page.");
   if (hasStudentPageRepairNote(parsed.passage) || hasStudentPageRepairNote(parsed.bonus) || hasStudentPageRepairNote(parsed.supportBox) || hasStudentPageRepairNote(parsed.directions)) w.push("A student-facing block contains a note telling the teacher to fix the item before printing. The item needs regenerating, not patching.");
   if (hasItemContentTamperingLanguage(parsed.passage) || hasItemContentTamperingLanguage(parsed.bonus) || hasItemContentTamperingLanguage(parsed.supportBox) || hasItemContentTamperingLanguage(parsed.directions)) w.push("A student-facing block announces that its own content was rewritten mid-generation. The printed page can no longer be trusted to match the key.");
+  if (hasSelfQuestioningMath(parsed.supportBox)) w.push("The support box's worked example questions its own arithmetic (for example \"= 4?\"), which is visible self-talk on the student page.");
   if (hasHedgingHint(parsed.supportBox) || hasHedgingHint(parsed.bonus) || hasHedgingHint(parsed.directions)) w.push("A hint or the bonus narrates its own reasoning (for example \"after noting...\") instead of teaching the student. It needs regenerating.");
   bonusWarnings(parsed, ctx).forEach((x) => w.push(x));
   nonWholeShareWarnings(parsed).forEach((x) => w.push(x));
